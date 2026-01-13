@@ -1,17 +1,19 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FilePenLineIcon, PlusIcon, UploadCloudIcon ,TrashIcon, PencilIcon, XIcon ,UploadCloud, LoaderCircleIcon} from "lucide-react"
+import { FilePenLineIcon, PlusIcon, UploadCloudIcon ,TrashIcon, PencilIcon, XIcon ,UploadCloud, LoaderCircleIcon, Sparkles} from "lucide-react"
 import { dummyResumeData } from '../assets/assets'
 import { useSelector } from 'react-redux'
 import api from '../configs/api'
 import toast from 'react-hot-toast'
 import  pdfToText  from 'react-pdfToText'
+import ATSScoreModal from '../components/ATSScoreModal'
 
 const Dashboard = () => {
   const colors=['#9333ea','#d97706','#dc2626','#0284c7','#16a34a'];
   const [allResumes, setAllResumes] = React.useState([]);
   const [showCreateResume, setShowCreateResume] = React.useState(false);
   const [showUploadResume, setShowUploadResume] = React.useState(false);
+  const [showATSModal, setShowATSModal] = React.useState(false);
   const [title, setTitle] = React.useState('');
   const [resume, setResume] = React.useState(null);
   const [editResumeId, setEditResumeId] = React.useState('');
@@ -106,8 +108,12 @@ const Dashboard = () => {
               <UploadCloudIcon className='size-11 transition-all duration-300 p-2.5 bg-gradient-to-br from-purple-300 to-purple-500 text-white rounded-full '/>
               <p className='text-sm group-hover:text-purple-600 transition-all duration-300'>Upload Existing</p>
             </button>
+            <button onClick={()=>setShowATSModal(true)} className='w-full bg-white sm:max-w-36 h-48 flex flex-col items-center justify-center rounded-lg gap-2 text-slate-600  border border-dashed border-slate-300 group hover:border-green-500 hover:shadow-lg transition-all duration-300 cursor-pointer'> 
+              <Sparkles className='size-11 transition-all duration-300 p-2.5 bg-gradient-to-br from-green-300 to-green-500 text-white rounded-full '/>
+              <p className='text-sm group-hover:text-green-600 transition-all duration-300'>Check ATS</p>
+            </button>
          </div>
-         <hr className='border-slate-300 my-6 sm:w-[305px]' />
+         <hr className='border-slate-300 my-6 sm:w-[445px]' />
 
          <div className='grid grid-cols-2 sm:flex flex-wrap gap-4'>
             {allResumes.map((resume,index)=>{
@@ -186,6 +192,8 @@ const Dashboard = () => {
             </form>
           )
          }
+
+         <ATSScoreModal isOpen={showATSModal} onClose={()=>setShowATSModal(false)} token={token} />
       </div>
     </div>
   )
