@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "server": "nodemon server.js"
+    "server": "nodemon server.js",
+    "seed": "node seedSkills.js",
+    "test:api": "node testSkillsAPI.js"
   },
   "keywords": [],
   "author": "",

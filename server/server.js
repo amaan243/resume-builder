@@ -5,6 +5,7 @@ import connectDB from './configs/db.js';
 import userRouter from './routes/userRoutes.js';
 import resumeRouter from './routes/resumeRoutes.js';
 import aiRouter from './routes/aiRouter.js';
+import skillRouter from './routes/skillRoutes.js';
 
 await connectDB();
 
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
 app.use('/api/users',userRouter);
 app.use('/api/resumes',resumeRouter);
 app.use('/api/ai',aiRouter);
+app.use('/api/skills',skillRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

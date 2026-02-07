@@ -4,6 +4,7 @@ import React from 'react'
 const TemplateSelector = ({onChange, selectedTemplate}) => {
 
     const [isOpen,setIsOpen]=React.useState(false);
+    const selectorRef = React.useRef(null);
 
     const templates=[
         {id:'classic',name:'Classic',preview:'A clean, traditional resume format with clear sections and professional typography.'},
@@ -11,13 +12,30 @@ const TemplateSelector = ({onChange, selectedTemplate}) => {
         {id:'minimal-image',name:'Minimal with Image',preview:'Minimal design with a single image and clean typography.'},
         {id:'minimal',name:'Minimal',preview:'Ultra-clean design that puts your content front and center.'},
     ]
+
+    // Close on click outside
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (selectorRef.current && !selectorRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen]);
   return (
-    <div className='relative'>
+    <div className='relative' ref={selectorRef}>
       <button onClick={()=>setIsOpen(!isOpen)} className='flex items-center gap-1 text-sm text-blue-600 bg-gradient-to-br from-blue-50 to-blue-100 ring-blue-300 hover:ring  transition-all px-3 py-2 rounded-lg'>
         <Layout size={14}/> <span className='max-sm:hidden'>Template</span>
       </button>
       {isOpen && (
-        <div className='absolute top-full p-3 mt-2 w-xs space-y-3 bg-white border border-gray-200 rounded-md shadow-sm z-10'>
+        <div className='absolute top-full p-3 mt-2 w-xs space-y-3 bg-white border border-gray-200 rounded-md shadow-lg z-50'>
             {templates.map((template)=>(
               <div key={template.id} onClick={()=>{onChange(template.id);setIsOpen(false)}} className={`relative p-3 border  rounded-md  cursor-pointer transition-all ${selectedTemplate===template.id ? 'border-blue-400 bg-blue-100':'border-gray-300 hover:border-gray-400 hover:bg-gray-100'}`}>
                 {selectedTemplate===template.id &&  (
