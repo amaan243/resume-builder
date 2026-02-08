@@ -6,6 +6,7 @@ import Layout from './pages/Layout'
 import Dashboard from './pages/Dashboard'
 import ResumeBuilder from './pages/ResumeBuilder'
 import Preview from './pages/Preview'
+import ATSChecker from './pages/ATSChecker'
 import api from './configs/api'
 import { login, setLoading } from './app/features/authSlice'
 import {Toaster} from 'react-hot-toast'
@@ -50,6 +51,7 @@ const App = () => {
           <Route index element={<Dashboard />} />
           <Route path='builder/:resumeId' element={<ResumeBuilder />} />
         </Route>
+        <Route path='ats-checker' element={<ATSChecker />} />
         <Route path='view/:resumeId' element={<Preview/>} />
         
         <Route path='*' element={<h2>404: Page Not Found</h2>} />
