@@ -139,20 +139,25 @@ const ClassicTemplate = ({ data, accentColor }) => {
             )}
 
             {/* Skills */}
-            {data.skills && data.skills.length > 0 && (
-                <section className="mb-6">
-                    <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
-                        CORE SKILLS
-                    </h2>
-
-                    <div className="flex gap-4 flex-wrap">
-                        {data.skills.map((skill, index) => (
-                            <div key={index} className="text-gray-700">
-                                • {skill}
+            {data.skills && (
+                (() => {
+                    const skillsArray = Array.isArray(data.skills) ? data.skills : [];
+                    const allSkills = skillsArray.flatMap(cat => cat.items || []);
+                    return allSkills.length > 0 && (
+                        <section className="mb-6">
+                            <h2 className="text-xl font-semibold mb-4" style={{ color: accentColor }}>
+                                CORE SKILLS
+                            </h2>
+                            <div className="flex gap-4 flex-wrap">
+                                {allSkills.map((skill, index) => (
+                                    <div key={index} className="text-gray-700">
+                                        • {skill}
+                                    </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                </section>
+                        </section>
+                    );
+                })()
             )}
         </div>
     );

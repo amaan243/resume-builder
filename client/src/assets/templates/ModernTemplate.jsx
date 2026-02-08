@@ -148,25 +148,28 @@ const ModernTemplate = ({ data, accentColor }) => {
 					)}
 
 					{/* Skills */}
-					{data.skills && data.skills.length > 0 && (
-						<section>
-							<h2 className="text-2xl font-light mb-4 pb-2 border-b border-gray-200">
-								Skills
-							</h2>
-
-							<div className="flex flex-wrap gap-2">
-								{data.skills.map((skill, index) => (
-									<span
-										key={index}
-										className="px-3 py-1 text-sm text-white rounded-full"
-										style={{ backgroundColor: accentColor }}
-									>
-										{skill}
-									</span>
-								))}
-							</div>
-						</section>
-					)}
+					{data.skills && ((() => {
+						const skillsArray = Array.isArray(data.skills) ? data.skills : [];
+						const allSkills = skillsArray.flatMap(cat => cat.items || []);
+						return allSkills.length > 0 && (
+							<section>
+								<h2 className="text-2xl font-light mb-4 pb-2 border-b border-gray-200">
+									Skills
+								</h2>
+								<div className="flex flex-wrap gap-2">
+									{allSkills.map((skill, index) => (
+										<span
+											key={index}
+											className="px-3 py-1 text-sm text-white rounded-full"
+											style={{ backgroundColor: accentColor }}
+										>
+											{skill}
+										</span>
+									))}
+								</div>
+							</section>
+						);
+					})())}
 				</div>
 			</div>
 		</div>

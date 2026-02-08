@@ -107,6 +107,25 @@ export const updateResume = async (req, res) => {
             resumeDataCopy.personal_info.image = response.url;
         }
 
+        // Prevent immutable field updates and normalize skills payload
+        delete resumeDataCopy._id;
+        delete resumeDataCopy.userId;
+        delete resumeDataCopy.createdAt;
+        delete resumeDataCopy.updatedAt;
+
+        if (Array.isArray(resumeDataCopy.skills)) {
+            if (resumeDataCopy.skills.length > 0 && typeof resumeDataCopy.skills[0] === 'string') {
+                resumeDataCopy.skills = [{ category: '', items: resumeDataCopy.skills }];
+            }
+        } else {
+            resumeDataCopy.skills = resumeDataCopy.skills?.items ? [resumeDataCopy.skills] : [];
+        }
+
+        resumeDataCopy.skills = resumeDataCopy.skills.map((cat) => ({
+            category: cat?.category || '',
+            items: Array.isArray(cat?.items) ? cat.items : []
+        }));
+
         const resume = await Resume.findByIdAndUpdate(
             { _id: resumeId, userId },
             resumeDataCopy,

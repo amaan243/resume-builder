@@ -91,18 +91,22 @@ const MinimalImageTemplate = ({ data, accentColor }) => {
                     )}
 
                     {/* Skills */}
-                    {data.skills && data.skills.length > 0 && (
-                        <section>
-                            <h2 className="text-sm font-semibold tracking-widest text-zinc-600 mb-3">
-                                SKILLS
-                            </h2>
-                            <ul className="space-y-1 text-sm">
-                                {data.skills.map((skill, index) => (
-                                    <li key={index}>{skill}</li>
-                                ))}
-                            </ul>
-                        </section>
-                    )}
+                    {data.skills && ((() => {
+                        const skillsArray = Array.isArray(data.skills) ? data.skills : [];
+                        const allSkills = skillsArray.flatMap(cat => cat.items || []);
+                        return allSkills.length > 0 && (
+                            <section>
+                                <h2 className="text-sm font-semibold tracking-widest text-zinc-600 mb-3">
+                                    SKILLS
+                                </h2>
+                                <ul className="space-y-1 text-sm">
+                                    {allSkills.map((skill, index) => (
+                                        <li key={index}>{skill}</li>
+                                    ))}
+                                </ul>
+                            </section>
+                        );
+                    })())}
                 </aside>
 
                 {/* Right Content */}

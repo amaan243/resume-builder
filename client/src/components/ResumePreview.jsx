@@ -3,6 +3,7 @@ import ClassicTemplate from './templates/ClassicTemplate'
 import MinimalImageTemplate from './templates/MinimalImageTemplate'
 import MinimalTemplate from './templates/MinimalTemplate'
 import ModernTemplate from './templates/ModernTemplate'
+import SoftwareEngineerOnePage from './templates/SoftwareEngineerOnePage'
 
 
 
@@ -16,6 +17,8 @@ const ResumePreview = ({ data, template, accentColor, classes = '' }) => {
                 return <MinimalImageTemplate data={data} accentColor={accentColor} />;
             case 'minimal':
                 return <MinimalTemplate data={data} accentColor={accentColor} />;
+            case 'swe-onepage':
+                return <SoftwareEngineerOnePage data={data} accentColor={accentColor} />;
             default:
                 return <ClassicTemplate data={data} accentColor={accentColor} />;
         }

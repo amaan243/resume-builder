@@ -11,6 +11,7 @@ const TemplateSelector = ({onChange, selectedTemplate}) => {
         {id:'modern',name:'Modern',preview:'Sleek design with the strategic use of color and modern font choices.'},
         {id:'minimal-image',name:'Minimal with Image',preview:'Minimal design with a single image and clean typography.'},
         {id:'minimal',name:'Minimal',preview:'Ultra-clean design that puts your content front and center.'},
+        {id:'swe-onepage',name:'Software Engineer One Page',preview:'Optimized single-page format for software engineers with categorized skills display.'},
     ]
 
     // Close on click outside

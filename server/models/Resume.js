@@ -26,7 +26,13 @@ const ResumeSchema = new mongoose.Schema({
         default:""
     },
     skills:[{
-        type: String
+        category: {
+            type: String,
+            default:""
+        },
+        items: [{
+            type: String
+        }]
     }],
     personal_info:{
         image: {

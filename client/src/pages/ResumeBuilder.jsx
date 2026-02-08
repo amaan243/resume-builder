@@ -39,7 +39,16 @@ const ResumeBuilder = () => {
     try {
       const{data}=await api.get(`/api/resumes/get/`+ resumeId,{headers:{Authorization:token}});
       if(data.resume){
-        setResumeData(data.resume);
+        // Handle backward compatibility - normalize skills into category array
+        let resume = data.resume;
+        if (Array.isArray(resume.skills)) {
+          if (resume.skills.length > 0 && typeof resume.skills[0] === 'string') {
+            resume.skills = [{ category: '', items: resume.skills }];
+          }
+        } else {
+          resume.skills = resume.skills?.items ? [resume.skills] : [];
+        }
+        setResumeData(resume);
         document.title = data.resume.title;
       }
     } catch (error) {
@@ -188,10 +197,14 @@ const ResumeBuilder = () => {
                       <ProjectForm data={resumeData.project} onChange={(data) => setResumeData((prev) => ({ ...prev, project: data }))} />
                     )}
                     { activeSection.id === 'skills' && (
-                      <SkillsForm data={resumeData.skills} onChange={(data) => setResumeData((prev) => ({ ...prev, skills: data }))} />
+                      <SkillsForm 
+                        data={resumeData.skills} 
+                        onChange={(data) => setResumeData((prev) => ({ ...prev, skills: data }))}
+                        isSweTemplate={resumeData.template === 'swe-onepage'}
+                      />
                     )}
                   </div>
-                 <button onClick={()=> {toast.promise(saveResume,{loading:'Saving...'})}} className='mt-6 px-6 py-2 text-sm bg-gradient-to-br from-green-100 to-green-200 ring-green-300 text-green-600  ring hover:ring-green-400 transition-all rounded-md '>
+                 <button onClick={()=> {toast.promise(saveResume(),{loading:'Saving...'})}} className='mt-6 px-6 py-2 text-sm bg-gradient-to-br from-green-100 to-green-200 ring-green-300 text-green-600  ring hover:ring-green-400 transition-all rounded-md '>
                    Save Changes
                  </button>
 
