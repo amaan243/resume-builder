@@ -150,46 +150,45 @@ const SoftwareEngineerOnePage = ({ data, accentColor }) => {
             <style>{`
                 @media print {
                     .resume-page {
-                        page-break-after: avoid;
-                        font-family: 'Times New Roman', Times, serif;
+                        font-family: Arial, Helvetica, sans-serif;
                         font-size: 12pt;
-                        line-height: 1.2;
+                        line-height: 1.1;
                         margin: 0;
-                        padding: 0.45in;
+                        padding: 0.35in;
                         max-width: 8.5in;
                         color: #000;
                     }
 
-                    .resume-page * {
-                        page-break-inside: avoid;
-                    }
-
                     .resume-page header {
-                        margin-bottom: 10px;
-                        padding-bottom: 4px;
+                        margin-bottom: 7px;
+                        padding-bottom: 3px;
                         text-align: center;
                     }
 
                     .resume-page header h1 {
-                        font-size: 18pt;
-                        margin: 0 0 3px 0;
+                        font-size: 17pt;
+                        margin: 0 0 2px 0;
                         font-weight: bold;
                     }
 
                     .resume-page header div {
-                        font-size: 11pt;
+                        font-size: 10.5pt;
                         margin: 0;
-                        line-height: 1.15;
+                        line-height: 1.05;
                     }
 
                     .resume-page section {
+                        margin-bottom: 6px;
+                        page-break-inside: auto;
+                    }
+
+                    .resume-page section > div {
                         page-break-inside: avoid;
-                        margin-bottom: 10px;
                     }
 
                     .resume-page h2 {
                         font-size: 12pt;
-                        margin: 0 0 4px 0;
+                        margin: 0 0 3px 0;
                         font-weight: bold;
                         text-transform: uppercase;
                         padding-bottom: 1px;
@@ -197,32 +196,31 @@ const SoftwareEngineerOnePage = ({ data, accentColor }) => {
 
                     .resume-page h3 {
                         font-size: 12pt;
-                        margin: 3px 0 1px 0;
+                        margin: 2px 0 0 0;
                         font-weight: bold;
                     }
 
                     .resume-page p {
-                        font-size: 11.5pt;
-                        line-height: 1.15;
-                        margin: 2px 0;
+                        font-size: 10.5pt;
+                        line-height: 1.05;
+                        margin: 1px 0;
                     }
 
                     .resume-page div {
-                        margin-bottom: 3px;
+                        margin-bottom: 2px;
                     }
 
                     .resume-page .space-y-1 {
-                        margin-top: 2px;
+                        margin-top: 1px;
                     }
 
                     .resume-page .space-y-1 p {
-                        margin: 2px 0;
+                        margin: 1px 0;
                     }
 
                     body {
                         margin: 0;
                         padding: 0;
-                        font-family: 'Times New Roman', Times, serif;
                     }
                 }
             `}</style>
