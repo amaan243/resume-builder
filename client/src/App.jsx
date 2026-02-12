@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard'
 import ResumeBuilder from './pages/ResumeBuilder'
 import Preview from './pages/Preview'
 import ATSChecker from './pages/ATSChecker'
+import Interview from './pages/Interview'
 import api from './configs/api'
 import { login, setLoading } from './app/features/authSlice'
 import {Toaster} from 'react-hot-toast'
@@ -50,6 +51,8 @@ const App = () => {
         <Route path='app' element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path='builder/:resumeId' element={<ResumeBuilder />} />
+          <Route path='interview' element={<Interview />} />
+          <Route path='interview/:resumeId' element={<Interview />} />
         </Route>
         <Route path='ats-checker' element={<ATSChecker />} />
         <Route path='view/:resumeId' element={<Preview/>} />

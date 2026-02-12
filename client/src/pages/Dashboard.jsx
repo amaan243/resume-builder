@@ -1,17 +1,18 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FilePenLineIcon, PlusIcon, UploadCloudIcon ,TrashIcon, PencilIcon, XIcon ,UploadCloud, LoaderCircleIcon, Sparkles} from "lucide-react"
+import { FilePenLineIcon, PlusIcon, UploadCloudIcon ,TrashIcon, PencilIcon, XIcon ,UploadCloud, LoaderCircleIcon, Sparkles, MessageSquare} from "lucide-react"
 import { dummyResumeData } from '../assets/assets'
 import { useSelector } from 'react-redux'
 import api from '../configs/api'
 import toast from 'react-hot-toast'
-import  pdfToText  from 'react-pdfToText'
+import pdfToText from 'react-pdftotext'
 
 const Dashboard = () => {
   const colors=['#9333ea','#d97706','#dc2626','#0284c7','#16a34a'];
   const [allResumes, setAllResumes] = React.useState([]);
   const [showCreateResume, setShowCreateResume] = React.useState(false);
   const [showUploadResume, setShowUploadResume] = React.useState(false);
+  const [showInterviewPicker, setShowInterviewPicker] = React.useState(false);
   const [title, setTitle] = React.useState('');
   const [resume, setResume] = React.useState(null);
   const [editResumeId, setEditResumeId] = React.useState('');
@@ -110,6 +111,10 @@ const Dashboard = () => {
               <Sparkles className='size-11 transition-all duration-300 p-2.5 bg-gradient-to-br from-green-300 to-green-500 text-white rounded-full '/>
               <p className='text-sm group-hover:text-green-600 transition-all duration-300'>Check ATS</p>
             </button>
+            <button onClick={()=>setShowInterviewPicker(true)} className='w-full bg-white sm:max-w-36 h-48 flex flex-col items-center justify-center rounded-lg gap-2 text-slate-600  border border-dashed border-slate-300 group hover:border-slate-700 hover:shadow-lg transition-all duration-300 cursor-pointer'> 
+              <MessageSquare className='size-11 transition-all duration-300 p-2.5 bg-gradient-to-br from-slate-600 to-slate-900 text-white rounded-full '/>
+              <p className='text-sm group-hover:text-slate-700 transition-all duration-300'>Interview Prep</p>
+            </button>
          </div>
          <hr className='border-slate-300 my-6 sm:w-[445px]' />
 
@@ -125,6 +130,7 @@ const Dashboard = () => {
                       Updated on {new Date(resume.updatedAt).toLocaleDateString()}
                     </p>
                     <div onClick={e=>e.stopPropagation()} className='absolute top-1 right-1 group-hover:flex items-center hidden'>
+                      <MessageSquare onClick={()=>navigate(`/app/interview/${resume._id}`)} className='size-7 p-1.5 hover:bg-white/50 rounded text-slate-700 transition-colors'/>
                       <TrashIcon onClick={()=>deleteResume(resume._id)} className='size-7 p-1.5 hover:bg-white/50 rounded text-slate-700 transition-colors'/>
                       <PencilIcon onClick={()=>{setEditResumeId(resume._id);setTitle(resume.title)}} className='size-7 p-1.5 hover:bg-white/50 rounded text-slate-700 transition-colors'/>
                     </div>
@@ -188,6 +194,49 @@ const Dashboard = () => {
                   <XIcon onClick={()=>{setEditResumeId('');setTitle('')}} className='absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors'/>
                </div>
             </form>
+          )
+         }
+         {
+          showInterviewPicker && (
+            <div onClick={()=>setShowInterviewPicker(false)} className='fixed inset-0 bg-black/70 backdrop-blur bg-opacity-50 z-10 flex items-center justify-center'>
+               <div onClick={e=>e.stopPropagation()} className='relative bg-slate-50 border shadow-md rounded-lg w-full max-w-md p-6'>
+                  <h2 className='text-xl font-bold mb-4'>Choose a Resume</h2>
+                  {allResumes.length === 0 ? (
+                    <p className='text-sm text-slate-600'>Create or upload a resume first.</p>
+                  ) : (
+                    <div className='space-y-2 max-h-64 overflow-y-auto pr-2'>
+                      {allResumes.map((resume) => (
+                        <button
+                          key={resume._id}
+                          onClick={() => {
+                            setShowInterviewPicker(false);
+                            navigate(`/app/interview/${resume._id}`);
+                          }}
+                          className='w-full text-left px-4 py-2 border border-slate-200 rounded-lg hover:bg-white hover:border-slate-300 transition-colors'
+                        >
+                          <p className='text-sm font-medium text-slate-700'>{resume.title}</p>
+                          <p className='text-[11px] text-slate-400'>Updated {new Date(resume.updatedAt).toLocaleDateString()}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className='mt-4 flex items-center justify-between'>
+                    <p className='text-xs text-slate-500'>
+                      Want to use a PDF that is not saved here?
+                    </p>
+                    <button
+                      onClick={() => {
+                        setShowInterviewPicker(false);
+                        navigate('/app/interview');
+                      }}
+                      className='text-xs text-slate-600 hover:text-slate-800 underline'
+                    >
+                      Use external PDF
+                    </button>
+                  </div>
+                  <XIcon onClick={()=>setShowInterviewPicker(false)} className='absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer transition-colors'/>
+               </div>
+            </div>
           )
          }
       </div>

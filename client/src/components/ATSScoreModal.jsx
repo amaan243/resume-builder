@@ -2,7 +2,7 @@ import React from 'react';
 import { XIcon, CheckCircle, AlertCircle, TrendingUp, FileText, UploadCloud, LoaderCircleIcon, Sparkles } from 'lucide-react';
 import api from '../configs/api';
 import toast from 'react-hot-toast';
-import pdfToText from 'react-pdfToText';
+import pdfToText from 'react-pdftotext';
 
 const ATSScoreModal = ({ isOpen, onClose, token }) => {
   const [resume, setResume] = React.useState(null);

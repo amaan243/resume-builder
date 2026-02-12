@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, CheckCircle, AlertCircle, TrendingUp, FileText, UploadCloud, LoaderCircleIcon, Sparkles, XIcon } from 'lucide-react';
 import api from '../configs/api';
 import toast from 'react-hot-toast';
-import pdfToText from 'react-pdfToText';
+import pdfToText from 'react-pdftotext';
 import { useSelector } from 'react-redux';
 
 const ATSChecker = () => {
