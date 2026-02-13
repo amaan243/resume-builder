@@ -3,8 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import {
-    generateAllAnswers,
-    generateAllAnswersFromText,
     generateFollowUp,
     generateFollowUpFromText,
     generateInterviewQuestions,
@@ -14,6 +12,23 @@ import pdfToText from 'react-pdftotext';
 import api from '../configs/api';
 
 const emptyGrouped = { technical: [], projectBased: [], hr: [] };
+const uploadStorageKey = 'interviewUploadState';
+const resumeStoragePrefix = 'interviewResumeState:';
+
+const safeParse = (value) => {
+    if (!value) return null;
+    try {
+        return JSON.parse(value);
+    } catch (error) {
+        return null;
+    }
+};
+
+const getTotalFollowUps = (items) =>
+    Object.values(items || {}).reduce(
+        (total, list) => total + (Array.isArray(list) ? list.length : 0),
+        0
+    );
 
 const Interview = () => {
     const { resumeId } = useParams();
@@ -22,10 +37,9 @@ const Interview = () => {
 
     const [jobRole, setJobRole] = React.useState('');
     const [questions, setQuestions] = React.useState(emptyGrouped);
-    const [answers, setAnswers] = React.useState(emptyGrouped);
     const [followUps, setFollowUps] = React.useState({});
+    const [loadingFollowUps, setLoadingFollowUps] = React.useState({});
     const [loadingQuestions, setLoadingQuestions] = React.useState(false);
-    const [loadingAnswers, setLoadingAnswers] = React.useState(false);
     const [resumeFile, setResumeFile] = React.useState(null);
     const [resumeText, setResumeText] = React.useState('');
     const [sessionId, setSessionId] = React.useState('');
@@ -49,7 +63,6 @@ const Interview = () => {
             setSourceMode('upload');
             setSelectedResumeId('');
             setQuestions(emptyGrouped);
-            setAnswers(emptyGrouped);
             setFollowUps({});
             toast.success('Resume uploaded for interview prep');
         } catch (error) {
@@ -98,7 +111,6 @@ const Interview = () => {
                 : await generateInterviewQuestions(payload, token);
 
             setQuestions(data.questions || emptyGrouped);
-            setAnswers(emptyGrouped);
             setFollowUps({});
             toast.success('Questions generated');
         } catch (error) {
@@ -107,44 +119,12 @@ const Interview = () => {
         setLoadingQuestions(false);
     };
 
-    const handleGenerateAllAnswers = async () => {
-        if (!token) return;
-        if (sourceMode === 'saved') {
-            const activeResumeId = resumeId || selectedResumeId;
-            if (!activeResumeId) {
-                toast.error('Select a saved resume or upload a PDF');
-                return;
-            }
-        }
-        if (sourceMode === 'upload' && !resumeText) {
-            toast.error('Upload a resume PDF first');
-            return;
-        }
-        if (questions.technical.length === 0 && questions.projectBased.length === 0 && questions.hr.length === 0) {
-            toast.error('Generate questions first');
-            return;
-        }
-        setLoadingAnswers(true);
-        try {
-            const activeResumeId = resumeId || selectedResumeId;
-            const payload = sourceMode === 'upload'
-                ? { resumeText, questions, jobRole, sessionId }
-                : { resumeId: activeResumeId, questions, jobRole };
-
-            const { data } = sourceMode === 'upload'
-                ? await generateAllAnswersFromText(payload, token)
-                : await generateAllAnswers(payload, token);
-
-            setAnswers(data.answers || emptyGrouped);
-            toast.success('Answers generated');
-        } catch (error) {
-            toast.error(error?.response?.data?.message || error.message);
-        }
-        setLoadingAnswers(false);
-    };
-
     const handleFollowUp = async (category, question) => {
         if (!token) return;
+        if (getTotalFollowUps(followUps) >= 3) {
+            toast.error('Follow-up limit reached (3 total)');
+            return;
+        }
         if (sourceMode === 'saved') {
             const activeResumeId = resumeId || selectedResumeId;
             if (!activeResumeId) {
@@ -157,6 +137,7 @@ const Interview = () => {
             return;
         }
         try {
+            setLoadingFollowUps((prev) => ({ ...prev, [question]: true }));
             const activeResumeId = resumeId || selectedResumeId;
             const payload = sourceMode === 'upload'
                 ? { resumeText, question, category, jobRole, sessionId }
@@ -174,6 +155,8 @@ const Interview = () => {
             toast.success('Follow-up generated');
         } catch (error) {
             toast.error(error?.response?.data?.message || error.message);
+        } finally {
+            setLoadingFollowUps((prev) => ({ ...prev, [question]: false }));
         }
     };
 
@@ -182,12 +165,80 @@ const Interview = () => {
     }, [resumeId]);
 
     React.useEffect(() => {
+        if (!resumeId) return;
+        const stored = safeParse(
+            localStorage.getItem(`${resumeStoragePrefix}${resumeId}`)
+        );
+        setSourceMode('saved');
+        setSelectedResumeId(resumeId);
+        if (!stored) {
+            setJobRole('');
+            setQuestions(emptyGrouped);
+            setFollowUps({});
+            setLoadingFollowUps({});
+            return;
+        }
+        setJobRole(stored.jobRole || '');
+        setQuestions(stored.questions || emptyGrouped);
+        setFollowUps(stored.followUps || {});
+        setLoadingFollowUps({});
+    }, [resumeId]);
+
+    React.useEffect(() => {
+        if (resumeId) return;
+        const stored = safeParse(localStorage.getItem(uploadStorageKey));
+        if (!stored || stored.sourceMode !== 'upload') return;
+        setSourceMode('upload');
+        setJobRole(stored.jobRole || '');
+        setQuestions(stored.questions || emptyGrouped);
+        setFollowUps(stored.followUps || {});
+        setLoadingFollowUps({});
+        setResumeText(stored.resumeText || '');
+        setSessionId(stored.sessionId || '');
+    }, [resumeId]);
+
+    React.useEffect(() => {
+        if (sourceMode !== 'upload') return;
+        const payload = {
+            sourceMode: 'upload',
+            jobRole,
+            questions,
+            followUps,
+            resumeText,
+            sessionId,
+        };
+        localStorage.setItem(uploadStorageKey, JSON.stringify(payload));
+    }, [sourceMode, jobRole, questions, followUps, resumeText, sessionId]);
+
+    React.useEffect(() => {
+        if (sourceMode !== 'saved') return;
+        const activeResumeId = resumeId || selectedResumeId;
+        if (!activeResumeId) return;
+        const payload = {
+            sourceMode: 'saved',
+            jobRole,
+            questions,
+            followUps,
+        };
+        localStorage.setItem(
+            `${resumeStoragePrefix}${activeResumeId}`,
+            JSON.stringify(payload)
+        );
+    }, [sourceMode, resumeId, selectedResumeId, jobRole, questions, followUps]);
+
+    React.useEffect(() => {
+        if (sourceMode !== 'upload') return;
+        if (!resumeText || sessionId) return;
+        setSessionId(buildSessionId());
+    }, [sourceMode, resumeText, sessionId]);
+
+    React.useEffect(() => {
         loadResumes();
     }, [token]);
 
     const selectedResume = allResumes.find((resume) => resume._id === resumeId);
 
-    const renderQuestionBlock = (label, items, answerItems, categoryKey) => (
+    const renderQuestionBlock = (label, items, categoryKey) => (
         <div className='bg-white border border-slate-200 rounded-lg p-5 shadow-sm'>
             <h3 className='text-lg font-semibold text-slate-800 mb-4'>{label}</h3>
             {items.length === 0 ? (
@@ -202,18 +253,24 @@ const Interview = () => {
                             <p className='text-sm font-semibold text-slate-700'>
                                 Q{index + 1}. {question}
                             </p>
-                            {answerItems[index] && (
-                                <p className='mt-3 text-sm text-slate-600'>
-                                    {answerItems[index]}
-                                </p>
-                            )}
                             <div className='mt-4'>
                                 <button
+                                    disabled={
+                                        loadingFollowUps[question] ||
+                                        getTotalFollowUps(followUps) >= 3
+                                    }
                                     onClick={() => handleFollowUp(categoryKey, question)}
-                                    className='text-xs px-3 py-1.5 rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50 transition'
+                                    className='text-xs px-3 py-1.5 rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50 transition disabled:opacity-60 disabled:cursor-not-allowed'
                                 >
-                                    Generate follow-up
+                                    {loadingFollowUps[question]
+                                        ? 'Generating...'
+                                        : 'Generate follow-up'}
                                 </button>
+                                {getTotalFollowUps(followUps) >= 3 && (
+                                    <p className='mt-2 text-xs text-slate-500'>
+                                        Follow-up limit reached (3 total).
+                                    </p>
+                                )}
                             </div>
                             {followUps[question] && followUps[question].length > 0 && (
                                 <div className='mt-3 space-y-2 border-l-2 border-slate-200 pl-4'>
@@ -307,6 +364,7 @@ const Interview = () => {
                                 setResumeFile(null);
                                 setResumeText('');
                                 setSessionId('');
+                                localStorage.removeItem(uploadStorageKey);
                             }}
                             className='text-xs text-slate-600 hover:text-slate-800 underline'
                         >
@@ -334,6 +392,7 @@ const Interview = () => {
                                     setResumeFile(null);
                                     setResumeText('');
                                     setSessionId('');
+                                    localStorage.removeItem(uploadStorageKey);
                                 }}
                                 className='text-xs text-slate-500 hover:text-slate-700'
                             >
@@ -419,19 +478,6 @@ const Interview = () => {
                         >
                             {loadingQuestions ? 'Generating...' : 'Generate Questions'}
                         </button>
-                        <button
-                            onClick={handleGenerateAllAnswers}
-                            disabled={
-                                loadingAnswers ||
-                                (sourceMode === 'upload' && !resumeText) ||
-                                questions.technical.length === 0 &&
-                                    questions.projectBased.length === 0 &&
-                                    questions.hr.length === 0
-                            }
-                            className='px-4 py-2 rounded-lg text-sm bg-slate-900 text-white hover:bg-slate-800 transition disabled:opacity-60'
-                        >
-                            {loadingAnswers ? 'Generating...' : 'Generate All Answers'}
-                        </button>
                     </div>
                 </div>
             </div>
@@ -440,16 +486,14 @@ const Interview = () => {
                 {renderQuestionBlock(
                     'Technical',
                     questions.technical,
-                    answers.technical,
                     'technical'
                 )}
                 {renderQuestionBlock(
                     'Project-Based',
                     questions.projectBased,
-                    answers.projectBased,
                     'projectBased'
                 )}
-                {renderQuestionBlock('HR / Behavioral', questions.hr, answers.hr, 'hr')}
+                {renderQuestionBlock('HR / Behavioral', questions.hr, 'hr')}
             </div>
 
         </div>

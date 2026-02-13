@@ -284,22 +284,16 @@ export const generateFollowUpQuestion = async (req, res) => {
             baseQuestion: question,
         });
 
-        const usedBaseCount = await FollowUpTracking.countDocuments({
-            userId,
-            resumeId: resume._id,
-            followUpCount: { $gt: 0 },
-        });
+        const followUpTotals = await FollowUpTracking.aggregate([
+            { $match: { userId, resumeId: resume._id } },
+            { $group: { _id: null, total: { $sum: "$followUpCount" } } },
+        ]);
+        const totalFollowUps = followUpTotals[0]?.total || 0;
 
-        if (!existingTracking && usedBaseCount >= 3) {
+        if (totalFollowUps >= 3) {
             return res
                 .status(400)
                 .json({ message: "Follow-up limit reached for this resume" });
-        }
-
-        if (existingTracking && existingTracking.followUpCount >= 3) {
-            return res
-                .status(400)
-                .json({ message: "Follow-up limit reached for this question" });
         }
 
         const resumeText = truncateText(resumeToText(resume));
@@ -372,22 +366,16 @@ export const generateFollowUpQuestionFromText = async (req, res) => {
             baseQuestion: question,
         });
 
-        const usedBaseCount = await FollowUpTracking.countDocuments({
-            userId,
-            sessionId,
-            followUpCount: { $gt: 0 },
-        });
+        const followUpTotals = await FollowUpTracking.aggregate([
+            { $match: { userId, sessionId } },
+            { $group: { _id: null, total: { $sum: "$followUpCount" } } },
+        ]);
+        const totalFollowUps = followUpTotals[0]?.total || 0;
 
-        if (!existingTracking && usedBaseCount >= 3) {
+        if (totalFollowUps >= 3) {
             return res
                 .status(400)
                 .json({ message: "Follow-up limit reached for this session" });
-        }
-
-        if (existingTracking && existingTracking.followUpCount >= 3) {
-            return res
-                .status(400)
-                .json({ message: "Follow-up limit reached for this question" });
         }
 
         const trimmedText = truncateText(resumeText);
