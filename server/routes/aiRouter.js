@@ -1,6 +1,6 @@
 import express from 'express';
 import protect from '../middlewares/authMiddleware.js';
-import { enhanceJobDescription, enhanceProfessionalSummary, uploadResume, getATSScore } from '../controllers/aiController.js';
+import { enhanceJobDescription, enhanceProfessionalSummary, uploadResume, getATSScore, getATSScoreFromResume } from '../controllers/aiController.js';
 import validateResumeOwnership from '../middlewares/validateResumeOwnership.js';
 import {
 	generateAllAnswers,
@@ -17,6 +17,7 @@ aiRouter.post('/enhance-pro-sum',protect,enhanceProfessionalSummary);
 aiRouter.post('/enhance-job-desc',protect,enhanceJobDescription);
 aiRouter.post('/upload-resume',protect,uploadResume);
 aiRouter.post('/ats-score',protect,getATSScore);
+aiRouter.post('/ats-score-resume', protect, validateResumeOwnership, getATSScoreFromResume);
 aiRouter.post('/interview-questions', protect, validateResumeOwnership, generateInterviewQuestions);
 aiRouter.post('/generate-all-answers', protect, validateResumeOwnership, generateAllAnswers);
 aiRouter.post('/followup-question', protect, validateResumeOwnership, generateFollowUpQuestion);

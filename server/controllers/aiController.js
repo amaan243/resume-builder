@@ -1,5 +1,6 @@
 import Resume from "../models/Resume.js";
 import ai from "../configs/ai.js";
+import { resumeToText, truncateText } from "../utils/interviewUtils.js";
 
 
 //controller for enhance the summary using AI
@@ -175,24 +176,21 @@ export const uploadResume = async (req, res) => {
 //controller for ATS Resume Score & Improvement Suggestions
 //POST /api/ai/ats-score
 
-export const getATSScore = async (req, res) => {
-    try {
-        const { resumeText, targetRole } = req.body;
+const runATSScore = async (resumeText, targetRole) => {
+    // Validation
+    if (!resumeText || resumeText.trim().length === 0) {
+        throw new Error("Resume text is required");
+    }
 
-        // Validation
-        if (!resumeText || resumeText.trim().length === 0) {
-            return res.status(400).json({ message: "Resume text is required" });
-        }
+    if (resumeText.length < 100) {
+        throw new Error("Resume text is too short. Please provide a complete resume.");
+    }
 
-        if (resumeText.length < 100) {
-            return res.status(400).json({ message: "Resume text is too short. Please provide a complete resume." });
-        }
+    if (resumeText.length > 50000) {
+        throw new Error("Resume text is too long. Maximum 50,000 characters allowed.");
+    }
 
-        if (resumeText.length > 50000) {
-            return res.status(400).json({ message: "Resume text is too long. Maximum 50,000 characters allowed." });
-        }
-
-        const systemPrompt = `You are an expert ATS (Applicant Tracking System) resume analyzer. Your task is to evaluate resumes like a real ATS system used by companies like LinkedIn, Indeed, and major corporations.
+    const systemPrompt = `You are an expert ATS (Applicant Tracking System) resume analyzer. Your task is to evaluate resumes like a real ATS system used by companies like LinkedIn, Indeed, and major corporations.
 
 Analyze the resume strictly and professionally. Consider:
 1. Keyword relevance and industry-specific terms
@@ -206,7 +204,7 @@ Analyze the resume strictly and professionally. Consider:
 
 Provide a detailed analysis in JSON format only. No markdown, no additional text.`;
 
-        const userPrompt = `Analyze this resume${targetRole ? ` for the role of ${targetRole}` : ''} and provide an ATS score:
+    const userPrompt = `Analyze this resume${targetRole ? ` for the role of ${targetRole}` : ''} and provide an ATS score:
 
 Resume Text:
 ${resumeText}
@@ -225,39 +223,92 @@ Provide your analysis in this exact JSON format:
 
 Be strict but fair. Most resumes score between 45-75. Only exceptional resumes score above 85.`;
 
-        const response = await ai.chat.completions.create({
-            model: process.env.OPENAI_MODEL,
-            messages: [
-                {
-                    role: "system",
-                    content: systemPrompt
-                },
-                {
-                    role: "user",
-                    content: userPrompt
-                },
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.3, // Lower temperature for more consistent scoring
-        });
+    const response = await ai.chat.completions.create({
+        model: process.env.OPENAI_MODEL,
+        messages: [
+            {
+                role: "system",
+                content: systemPrompt
+            },
+            {
+                role: "user",
+                content: userPrompt
+            },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3, // Lower temperature for more consistent scoring
+    });
 
-        const analysisResult = response.choices[0].message.content;
-        const parsedResult = JSON.parse(analysisResult);
+    const analysisResult = response.choices[0].message.content;
+    const parsedResult = JSON.parse(analysisResult);
 
-        // Validate the response structure
-        if (!parsedResult.atsScore || typeof parsedResult.atsScore !== 'number') {
-            throw new Error("Invalid AI response format");
-        }
+    // Validate the response structure
+    if (!parsedResult.atsScore || typeof parsedResult.atsScore !== 'number') {
+        throw new Error("Invalid AI response format");
+    }
 
-        // Ensure score is within bounds
-        parsedResult.atsScore = Math.max(0, Math.min(100, parsedResult.atsScore));
+    // Ensure score is within bounds
+    parsedResult.atsScore = Math.max(0, Math.min(100, parsedResult.atsScore));
+
+    return parsedResult;
+};
+
+export const getATSScore = async (req, res) => {
+    try {
+        const { resumeText, targetRole } = req.body;
+        const parsedResult = await runATSScore(resumeText, targetRole);
 
         return res.status(200).json(parsedResult);
     } catch (error) {
         console.error("ATS Score Error:", error);
-        return res.status(500).json({ 
-            message: "Failed to analyze resume. Please try again.", 
-            error: error.message 
+        if (error.status === 429) {
+            return res.status(429).json({
+                message: "Rate limit exceeded. Please wait a moment and try again.",
+            });
+        }
+
+        if (error.status === 401) {
+            return res.status(401).json({
+                message: "OpenAI API authentication failed. Check your API key.",
+            });
+        }
+
+        return res.status(500).json({
+            message: "Failed to analyze resume. Please try again.",
+            error: error.message
+        });
+    }
+}
+
+//controller for ATS Resume Score from saved resume
+//POST /api/ai/ats-score-resume
+
+export const getATSScoreFromResume = async (req, res) => {
+    try {
+        const { targetRole } = req.body;
+        const resume = req.resume;
+
+        const resumeText = truncateText(resumeToText(resume), 50000);
+        const parsedResult = await runATSScore(resumeText, targetRole);
+
+        return res.status(200).json(parsedResult);
+    } catch (error) {
+        console.error("ATS Score From Resume Error:", error);
+        if (error.status === 429) {
+            return res.status(429).json({
+                message: "Rate limit exceeded. Please wait a moment and try again.",
+            });
+        }
+
+        if (error.status === 401) {
+            return res.status(401).json({
+                message: "OpenAI API authentication failed. Check your API key.",
+            });
+        }
+
+        return res.status(500).json({
+            message: "Failed to analyze resume. Please try again.",
+            error: error.message
         });
     }
 }

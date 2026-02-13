@@ -4,12 +4,15 @@ import api from '../configs/api';
 import { useDispatch } from 'react-redux';
 import { login } from '../app/features/authSlice';
 import toast from 'react-hot-toast';
+import VerifyEmail from './VerifyEmail';
 
 const Login = () => {
   
   const query = new URLSearchParams(window.location.search);
   const urlState = query.get('state');
   const [state, setState] = React.useState(urlState || "login")
+  const [showVerification, setShowVerification] = React.useState(false)
+  const [pendingEmail, setPendingEmail] = React.useState(null)
 
   const dispatch=useDispatch();
 
@@ -23,10 +26,25 @@ const Login = () => {
         e.preventDefault()
         try {
             const { data } = await api.post(`/api/users/${state}`, formData);
-            // Expecting { message, user, token } from server
-            dispatch(login({ user: data.user, token: data.token }));
-            localStorage.setItem('token', data.token);
-            toast.success(data.message);
+            
+            // If signup requires verification
+            if (state === "register" && data.requiresVerification) {
+                setPendingEmail(formData.email)
+                // Store password temporarily for auto-login after verification
+                localStorage.setItem('signup_password', formData.password)
+                setShowVerification(true)
+                toast.success('Verification code sent to your email!')
+                return
+            }
+            
+            // If login (token should be present)
+            if (data.token) {
+                dispatch(login({ user: data.user, token: data.token }));
+                localStorage.setItem('token', data.token);
+                toast.success(data.message);
+            } else {
+                toast.error('Please verify your email first')
+            }
         } catch (error) {
             toast.error(error?.response?.data?.message || error.message);
         }
@@ -37,6 +55,30 @@ const Login = () => {
         const { name, value } = e.target
         setFormData(prev => ({ ...prev, [name]: value }))
     }
+
+    const handleVerificationComplete = (loginData) => {
+        dispatch(login({ user: loginData.user, token: loginData.token }));
+        localStorage.setItem('token', loginData.token);
+        setShowVerification(false)
+        setPendingEmail(null)
+        setFormData({ name: '', email: '', password: '' })
+        toast.success('Email verified! Welcome!')
+    }
+
+    if (showVerification && pendingEmail) {
+        return (
+            <VerifyEmail 
+                email={pendingEmail}
+                onVerificationComplete={handleVerificationComplete}
+                onBack={() => {
+                    setShowVerification(false)
+                    setPendingEmail(null)
+                    localStorage.removeItem('signup_password')
+                }}
+            />
+        )
+    }
+
   return (
     <div className='flex items-center justify-center min-h-screen bg-gray-50'>
       <form onSubmit={handleSubmit} className="sm:w-[350px] w-full text-center border border-gray-300/60 rounded-2xl px-8 bg-white">

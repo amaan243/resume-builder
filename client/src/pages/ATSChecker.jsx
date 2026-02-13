@@ -15,13 +15,47 @@ const ATSChecker = () => {
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const [atsResult, setAtsResult] = React.useState(null);
   const [activeTab, setActiveTab] = React.useState('upload');
+  const [sourceMode, setSourceMode] = React.useState('upload');
+  const [allResumes, setAllResumes] = React.useState([]);
+  const [selectedResumeId, setSelectedResumeId] = React.useState('');
+
+  const loadResumes = async () => {
+    if (!token) return;
+    try {
+      const { data } = await api.get('/api/users/resumes', {
+        headers: { Authorization: token },
+      });
+      setAllResumes(data.resumes || []);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || error.message);
+    }
+  };
 
   const analyzeResume = async (e) => {
     e.preventDefault();
     setIsAnalyzing(true);
     try {
+      if (sourceMode === 'saved') {
+        if (!selectedResumeId) {
+          toast.error('Select a saved resume');
+          setIsAnalyzing(false);
+          return;
+        }
+
+        const { data } = await api.post(
+          '/api/ai/ats-score-resume',
+          { resumeId: selectedResumeId, targetRole: targetRole || undefined },
+          { headers: { Authorization: token } }
+        );
+
+        setAtsResult(data);
+        setActiveTab('results');
+        toast.success('Resume analyzed successfully!');
+        return;
+      }
+
       const resumeText = await pdfToText(resume);
-      
+
       if (!resumeText || resumeText.trim().length < 100) {
         toast.error('Unable to extract text from PDF. Please ensure it\'s a valid resume.');
         setIsAnalyzing(false);
@@ -68,10 +102,15 @@ const ATSChecker = () => {
 
   const resetForm = () => {
     setResume(null);
+    setSelectedResumeId('');
     setTargetRole('');
     setAtsResult(null);
     setActiveTab('upload');
   };
+
+  React.useEffect(() => {
+    loadResumes();
+  }, [token]);
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
@@ -135,6 +174,44 @@ const ATSChecker = () => {
           <div className='p-8'>
             {activeTab === 'upload' && (
               <form onSubmit={analyzeResume} className='space-y-6'>
+                <div className='flex flex-wrap items-center gap-3'>
+                  <span className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>
+                    Active source
+                  </span>
+                  <span
+                    className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                      sourceMode === 'upload'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}
+                  >
+                    {sourceMode === 'upload' ? 'Uploaded PDF' : 'Saved resume'}
+                  </span>
+                  <div className='flex items-center gap-2'>
+                    <button
+                      type='button'
+                      onClick={() => setSourceMode('saved')}
+                      className={`text-xs px-3 py-1 rounded-full border transition ${
+                        sourceMode === 'saved'
+                          ? 'border-blue-400 text-blue-700 bg-blue-50'
+                          : 'border-gray-200 text-gray-600 hover:bg-white'
+                      }`}
+                    >
+                      Use saved resume
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setSourceMode('upload')}
+                      className={`text-xs px-3 py-1 rounded-full border transition ${
+                        sourceMode === 'upload'
+                          ? 'border-green-400 text-green-700 bg-green-50'
+                          : 'border-gray-200 text-gray-600 hover:bg-white'
+                      }`}
+                    >
+                      Use uploaded PDF
+                    </button>
+                  </div>
+                </div>
                 <div>
                   <label className='block text-sm font-medium text-gray-700 mb-2'>
                     Target Role (Optional)
@@ -151,49 +228,77 @@ const ATSChecker = () => {
                   </p>
                 </div>
 
-                <div>
-                  <label htmlFor='ats-resume-input' className='block text-sm font-medium text-gray-700 mb-2'>
-                    Upload Resume (PDF)
-                  </label>
-                  <div className='relative'>
-                    <input
-                      id='ats-resume-input'
-                      type='file'
-                      accept='.pdf'
-                      hidden
-                      onChange={(e) => setResume(e.target.files[0])}
-                      required
-                    />
-                    <label
-                      htmlFor='ats-resume-input'
-                      className='flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-300 rounded-lg p-12 hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all group'
-                    >
-                      {resume ? (
-                        <div className='flex items-center gap-3'>
-                          <FileText className='size-10 text-green-600' />
-                          <div className='text-left'>
-                            <p className='text-green-600 font-semibold'>{resume.name}</p>
-                            <p className='text-sm text-gray-500'>
-                              {(resume.size / 1024).toFixed(2)} KB
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <UploadCloud className='size-16 text-gray-400 group-hover:text-green-500 transition-colors' />
-                          <div className='text-center'>
-                            <p className='text-gray-700 font-semibold'>Click to upload resume</p>
-                            <p className='text-sm text-gray-500 mt-1'>PDF format only • Max 10MB</p>
-                          </div>
-                        </>
-                      )}
+                {sourceMode === 'saved' ? (
+                  <div>
+                    <label className='block text-sm font-medium text-gray-700 mb-2'>
+                      Choose a saved resume
                     </label>
+                    <select
+                      value={selectedResumeId}
+                      onChange={(e) => setSelectedResumeId(e.target.value)}
+                      className='w-full border border-gray-300 rounded-lg px-3 py-3 text-sm bg-white'
+                    >
+                      <option value=''>Select a resume</option>
+                      {allResumes.map((resumeItem) => (
+                        <option key={resumeItem._id} value={resumeItem._id}>
+                          {resumeItem.title}
+                        </option>
+                      ))}
+                    </select>
+                    {allResumes.length === 0 && (
+                      <p className='text-xs text-gray-500 mt-2'>
+                        No saved resumes yet. Upload a PDF or create a resume first.
+                      </p>
+                    )}
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <label htmlFor='ats-resume-input' className='block text-sm font-medium text-gray-700 mb-2'>
+                      Upload Resume (PDF)
+                    </label>
+                    <div className='relative'>
+                      <input
+                        id='ats-resume-input'
+                        type='file'
+                        accept='.pdf'
+                        hidden
+                        onChange={(e) => setResume(e.target.files[0])}
+                        required={sourceMode === 'upload'}
+                      />
+                      <label
+                        htmlFor='ats-resume-input'
+                        className='flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-300 rounded-lg p-12 hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all group'
+                      >
+                        {resume ? (
+                          <div className='flex items-center gap-3'>
+                            <FileText className='size-10 text-green-600' />
+                            <div className='text-left'>
+                              <p className='text-green-600 font-semibold'>{resume.name}</p>
+                              <p className='text-sm text-gray-500'>
+                                {(resume.size / 1024).toFixed(2)} KB
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <UploadCloud className='size-16 text-gray-400 group-hover:text-green-500 transition-colors' />
+                            <div className='text-center'>
+                              <p className='text-gray-700 font-semibold'>Click to upload resume</p>
+                              <p className='text-sm text-gray-500 mt-1'>PDF format only • Max 10MB</p>
+                            </div>
+                          </>
+                        )}
+                      </label>
+                    </div>
+                  </div>
+                )}
 
                 <button
                   type='submit'
-                  disabled={isAnalyzing || !resume}
+                  disabled={
+                    isAnalyzing ||
+                    (sourceMode === 'upload' ? !resume : !selectedResumeId)
+                  }
                   className='w-full py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl'
                 >
                   {isAnalyzing ? (
