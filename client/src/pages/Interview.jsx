@@ -10,6 +10,8 @@ import {
 } from '../services/interviewApi';
 import pdfToText from 'react-pdftotext';
 import api from '../configs/api';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const emptyGrouped = { technical: [], projectBased: [], hr: [] };
 const uploadStorageKey = 'interviewUploadState';
@@ -117,6 +119,101 @@ const Interview = () => {
             toast.error(error?.response?.data?.message || error.message);
         }
         setLoadingQuestions(false);
+    };
+
+    const downloadInterviewPDF = async () => {
+        try {
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 10;
+            const maxWidth = pageWidth - margin * 2;
+            let yPosition = margin;
+
+            // Title
+            pdf.setFontSize(16);
+            pdf.setFont(undefined, 'bold');
+            pdf.text('Interview Questions', margin, yPosition);
+            yPosition += 10;
+
+            // Job Role
+            pdf.setFontSize(11);
+            pdf.setFont(undefined, 'bold');
+            pdf.text(`Position: ${jobRole}`, margin, yPosition);
+            yPosition += 8;
+
+            // Date
+            pdf.setFontSize(9);
+            pdf.setFont(undefined, 'normal');
+            pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, margin, yPosition);
+            yPosition += 10;
+
+            // Helper function to add text with word wrapping
+            const addWrappedText = (text, x, y, maxW, fontSize = 10) => {
+                pdf.setFontSize(fontSize);
+                const lines = pdf.splitTextToSize(text, maxW);
+                const lineHeight = pdf.getLineHeight() / pdf.internal.scaleFactor;
+                pdf.text(lines, x, y);
+                return y + lines.length * lineHeight + 2;
+            };
+
+            // Categories
+            const categories = [
+                { key: 'technical', label: 'Technical Questions', items: questions.technical },
+                { key: 'projectBased', label: 'Project-Based Questions', items: questions.projectBased },
+                { key: 'hr', label: 'HR / Behavioral Questions', items: questions.hr }
+            ];
+
+            categories.forEach((category) => {
+                if (category.items.length === 0) return;
+
+                // Category title
+                pdf.setFont(undefined, 'bold');
+                pdf.setFontSize(12);
+                yPosition += 3;
+                yPosition = addWrappedText(category.label, margin, yPosition, maxWidth, 12);
+
+                // Questions and follow-ups
+                category.items.forEach((question, index) => {
+                    // Check if we need a new page
+                    if (yPosition > pageHeight - margin - 20) {
+                        pdf.addPage();
+                        yPosition = margin;
+                    }
+
+                    // Question
+                    pdf.setFont(undefined, 'bold');
+                    pdf.setFontSize(10);
+                    const questionText = `Q${index + 1}. ${question}`;
+                    yPosition = addWrappedText(questionText, margin, yPosition, maxWidth, 10);
+
+                    // Follow-ups if they exist
+                    if (followUps[question] && followUps[question].length > 0) {
+                        pdf.setFont(undefined, 'italic');
+                        pdf.setFontSize(9);
+                        followUps[question].forEach((followUp, followIndex) => {
+                            if (yPosition > pageHeight - margin - 10) {
+                                pdf.addPage();
+                                yPosition = margin;
+                            }
+                            const followUpText = `Follow-up ${followIndex + 1}: ${followUp}`;
+                            yPosition = addWrappedText(followUpText, margin + 5, yPosition, maxWidth - 5, 9);
+                        });
+                    }
+
+                    yPosition += 3;
+                });
+
+                yPosition += 5;
+            });
+
+            // Save the PDF
+            pdf.save(`interview_questions_${jobRole.replace(/\s+/g, '_')}_${Date.now()}.pdf`);
+            toast.success('PDF downloaded successfully');
+        } catch (error) {
+            toast.error('Failed to download PDF');
+            console.error(error);
+        }
     };
 
     const handleFollowUp = async (category, question) => {
@@ -478,6 +575,17 @@ const Interview = () => {
                         >
                             {loadingQuestions ? 'Generating...' : 'Generate Questions'}
                         </button>
+                        {(questions.technical.length > 0 || questions.projectBased.length > 0 || questions.hr.length > 0) && (
+                            <button
+                                onClick={downloadInterviewPDF}
+                                className='px-4 py-2 rounded-lg text-sm bg-blue-600 text-white hover:bg-blue-700 transition flex items-center gap-2'
+                            >
+                                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 19l9 2-9-18-9 18 9-2zm0 0v-8m0 0l-4 2m4-2l4 2' />
+                                </svg>
+                                Download PDF
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

@@ -29,11 +29,8 @@ export const registerUser =async (req, res) => {
         }
 
         // Check if email is already in temp signup (pending verification)
-        const pendingSignup = await TempSignup.findOne({ email });
-        if (pendingSignup) {
-            return res.status(400).json({ message: "Email already registered. Please check your inbox for verification code." });
-        }
-
+        let pendingSignup = await TempSignup.findOne({ email });
+        
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
         
@@ -41,14 +38,23 @@ export const registerUser =async (req, res) => {
         const verificationCode = generateVerificationCode();
         const verificationExpires = getVerificationExpiry();
         
-        // Create temporary signup record (not a full user yet)
-        const tempSignup = await TempSignup.create({
-            name,
-            email,
-            password: hashedPassword,
-            verificationCode: String(verificationCode),
-            verificationExpires,
-        });
+        if (pendingSignup) {
+            // Update existing pending signup with new code and data
+            pendingSignup.name = name;
+            pendingSignup.password = hashedPassword;
+            pendingSignup.verificationCode = String(verificationCode);
+            pendingSignup.verificationExpires = verificationExpires;
+            await pendingSignup.save();
+        } else {
+            // Create temporary signup record (not a full user yet)
+            pendingSignup = await TempSignup.create({
+                name,
+                email,
+                password: hashedPassword,
+                verificationCode: String(verificationCode),
+                verificationExpires,
+            });
+        }
 
         // Send verification email
         try {
