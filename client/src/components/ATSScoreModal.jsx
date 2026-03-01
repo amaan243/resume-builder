@@ -61,6 +61,17 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
     return 'Poor';
   };
 
+  const formatTextOrNA = (value) => {
+    if (typeof value !== 'string') return 'N/A';
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : 'N/A';
+  };
+
+  const formatPercentOrNA = (value, showPlus = false) => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) return 'N/A';
+    return `${showPlus ? '+' : ''}${value}%`;
+  };
+
   const resetModal = () => {
     setResume(null);
     setTargetRole('');
@@ -350,6 +361,64 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Top Improvement Section */}
+              {atsResult.topImprovementSection && (
+                <div className='border border-indigo-200 rounded-lg p-5 bg-indigo-50'>
+                  <div className='flex items-center gap-2 mb-3'>
+                    <TrendingUp className='size-5 text-indigo-600' />
+                    <h3 className='text-lg font-semibold text-indigo-900'>Highest Impact Improvement</h3>
+                  </div>
+                  <div className='space-y-2 text-sm text-indigo-900'>
+                    <p>
+                      <strong>Section to improve:</strong> {formatTextOrNA(atsResult.topImprovementSection.section)}
+                    </p>
+                    <p>
+                      <strong>Potential ATS score increase:</strong> {formatPercentOrNA(atsResult.topImprovementSection.potentialScoreIncreasePercent, true)}
+                    </p>
+                    <p>
+                      <strong>Why:</strong> {formatTextOrNA(atsResult.topImprovementSection.reason)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Section Impact Analysis */}
+              {atsResult.sectionImpactAnalysis && atsResult.sectionImpactAnalysis.length > 0 && (
+                <div className='border border-purple-200 rounded-lg p-5 bg-purple-50'>
+                  <div className='flex items-center gap-2 mb-3'>
+                    <FileText className='size-5 text-purple-600' />
+                    <h3 className='text-lg font-semibold text-purple-900'>Section-wise Impact Analysis</h3>
+                  </div>
+                  <div className='space-y-3'>
+                    {atsResult.sectionImpactAnalysis.map((item, index) => (
+                      <div key={`${item.section}-${index}`} className='bg-white border border-purple-100 rounded-lg p-4'>
+                        <div className='flex items-center justify-between gap-2 mb-2'>
+                          <p className='text-sm font-semibold text-purple-900'>{formatTextOrNA(item.section)}</p>
+                          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                            item.impactLevel === 'high'
+                              ? 'bg-red-100 text-red-700'
+                              : item.impactLevel === 'medium'
+                              ? 'bg-yellow-100 text-yellow-700'
+                              : item.impactLevel === 'low'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}>
+                            {formatTextOrNA(item.impactLevel)} impact
+                          </span>
+                        </div>
+                        <div className='grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-purple-900'>
+                          <p><strong>Current contribution:</strong> {formatPercentOrNA(item.currentImpactPercent)}</p>
+                          <p><strong>Improvement potential:</strong> {formatPercentOrNA(item.improvementPotentialPercent)}</p>
+                        </div>
+                        <p className='text-sm text-purple-800 mt-2'>
+                          <strong>Reason:</strong> {formatTextOrNA(item.reason)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

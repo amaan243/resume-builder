@@ -176,8 +176,87 @@ export const uploadResume = async (req, res) => {
 //controller for ATS Resume Score & Improvement Suggestions
 //POST /api/ai/ats-score
 
+// const runATSScore = async (resumeText, targetRole) => {
+//     // Validation
+//     if (!resumeText || resumeText.trim().length === 0) {
+//         throw new Error("Resume text is required");
+//     }
+
+//     if (resumeText.length < 100) {
+//         throw new Error("Resume text is too short. Please provide a complete resume.");
+//     }
+
+//     if (resumeText.length > 50000) {
+//         throw new Error("Resume text is too long. Maximum 50,000 characters allowed.");
+//     }
+
+//     const systemPrompt = `You are an expert ATS (Applicant Tracking System) resume analyzer. Your task is to evaluate resumes like a real ATS system used by companies like LinkedIn, Indeed, and major corporations.
+
+// Analyze the resume strictly and professionally. Consider:
+// 1. Keyword relevance and industry-specific terms
+// 2. Skills match (technical and soft skills)
+// 3. Formatting quality and ATS-readability
+// 4. Use of action verbs and quantifiable achievements
+// 5. Experience clarity and relevance
+// 6. Grammar, spelling, and professional language
+// 7. Contact information completeness
+// 8. Section organization and structure
+
+// Provide a detailed analysis in JSON format only. No markdown, no additional text.`;
+
+//     const userPrompt = `Analyze this resume${targetRole ? ` for the role of ${targetRole}` : ''} and provide an ATS score:
+
+// Resume Text:
+// ${resumeText}
+
+// Provide your analysis in this exact JSON format:
+// {
+//   "atsScore": <number between 0-100>,
+//   "strengths": [<array of 3-5 specific strengths>],
+//   "weaknesses": [<array of 3-5 specific weaknesses>],
+//   "missingKeywords": [<array of 5-10 important keywords missing from resume>],
+//   "suggestions": [<array of 5-8 actionable improvement suggestions>],
+//   "grammarIssues": [<array of grammar or formatting issues, if any>],
+//   "keywordDensity": "<low/medium/high>",
+//   "overallFeedback": "<2-3 sentence summary of the resume quality>"
+// }
+
+// Be strict but fair. Most resumes score between 45-75. Only exceptional resumes score above 85.`;
+
+//     const response = await ai.chat.completions.create({
+//         model: process.env.OPENAI_MODEL,
+//         messages: [
+//             {
+//                 role: "system",
+//                 content: systemPrompt
+//             },
+//             {
+//                 role: "user",
+//                 content: userPrompt
+//             },
+//         ],
+//         response_format: { type: "json_object" },
+//         temperature: 0.3, // Lower temperature for more consistent scoring
+//     });
+
+//     const analysisResult = response.choices[0].message.content;
+//     const parsedResult = JSON.parse(analysisResult);
+
+//     // Validate the response structure
+//     if (!parsedResult.atsScore || typeof parsedResult.atsScore !== 'number') {
+//         throw new Error("Invalid AI response format");
+//     }
+
+//     // Ensure score is within bounds
+//     parsedResult.atsScore = Math.max(0, Math.min(100, parsedResult.atsScore));
+
+//     return parsedResult;
+// };
+
 const runATSScore = async (resumeText, targetRole) => {
-    // Validation
+    // =========================
+    // Input Validation
+    // =========================
     if (!resumeText || resumeText.trim().length === 0) {
         throw new Error("Resume text is required");
     }
@@ -190,7 +269,12 @@ const runATSScore = async (resumeText, targetRole) => {
         throw new Error("Resume text is too long. Maximum 50,000 characters allowed.");
     }
 
-    const systemPrompt = `You are an expert ATS (Applicant Tracking System) resume analyzer. Your task is to evaluate resumes like a real ATS system used by companies like LinkedIn, Indeed, and major corporations.
+    // =========================
+    // System Prompt (UPDATED)
+    // =========================
+    const systemPrompt = `
+You are an expert ATS (Applicant Tracking System) resume analyzer. 
+Your task is to evaluate resumes like a real ATS system used by companies like LinkedIn, Indeed, and major corporations.
 
 Analyze the resume strictly and professionally. Consider:
 1. Keyword relevance and industry-specific terms
@@ -201,15 +285,36 @@ Analyze the resume strictly and professionally. Consider:
 6. Grammar, spelling, and professional language
 7. Contact information completeness
 8. Section organization and structure
+9. Section contribution analysis (Resume Section Importance Analyzer)
 
-Provide a detailed analysis in JSON format only. No markdown, no additional text.`;
+Additionally:
+- Estimate how much each resume section contributes to the overall ATS score.
+- Estimate how much improvement potential (%) exists for each section.
+- Identify which section improvement would most increase ATS score.
 
-    const userPrompt = `Analyze this resume${targetRole ? ` for the role of ${targetRole}` : ''} and provide an ATS score:
+Sections to evaluate:
+- Contact Information
+- Professional Summary
+- Skills
+- Experience
+- Projects
+- Education
+- Certifications (if present)
+
+Provide a detailed analysis in JSON format only. No markdown. No explanations outside JSON.
+`;
+
+    // =========================
+    // User Prompt (UPDATED JSON FORMAT)
+    // =========================
+    const userPrompt = `
+Analyze this resume${targetRole ? ` for the role of ${targetRole}` : ''} and provide an ATS score.
 
 Resume Text:
 ${resumeText}
 
 Provide your analysis in this exact JSON format:
+
 {
   "atsScore": <number between 0-100>,
   "strengths": [<array of 3-5 specific strengths>],
@@ -218,37 +323,71 @@ Provide your analysis in this exact JSON format:
   "suggestions": [<array of 5-8 actionable improvement suggestions>],
   "grammarIssues": [<array of grammar or formatting issues, if any>],
   "keywordDensity": "<low/medium/high>",
-  "overallFeedback": "<2-3 sentence summary of the resume quality>"
+  "overallFeedback": "<2-3 sentence summary of the resume quality>",
+  "sectionImpactAnalysis": [
+    {
+      "section": "<section name>",
+      "currentImpactPercent": <number>,
+      "improvementPotentialPercent": <number>,
+      "impactLevel": "<low/medium/high>",
+      "reason": "<brief explanation>"
+    }
+  ],
+  "topImprovementSection": {
+    "section": "<section name>",
+    "potentialScoreIncreasePercent": <number>,
+    "reason": "<why improving this section increases ATS score most>"
+  }
 }
 
-Be strict but fair. Most resumes score between 45-75. Only exceptional resumes score above 85.`;
+Be strict but fair. Most resumes score between 45-75.
+Only exceptional resumes score above 85.
+Ensure section impact percentages are realistic and logically distributed.
+`;
 
+    // =========================
+    // OpenAI Call
+    // =========================
     const response = await ai.chat.completions.create({
         model: process.env.OPENAI_MODEL,
         messages: [
-            {
-                role: "system",
-                content: systemPrompt
-            },
-            {
-                role: "user",
-                content: userPrompt
-            },
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.3, // Lower temperature for more consistent scoring
+        temperature: 0.3
     });
 
     const analysisResult = response.choices[0].message.content;
-    const parsedResult = JSON.parse(analysisResult);
 
-    // Validate the response structure
-    if (!parsedResult.atsScore || typeof parsedResult.atsScore !== 'number') {
-        throw new Error("Invalid AI response format");
+    let parsedResult;
+
+    try {
+        parsedResult = JSON.parse(analysisResult);
+    } catch (error) {
+        throw new Error("Failed to parse AI response");
     }
 
-    // Ensure score is within bounds
+    // =========================
+    // Response Validation
+    // =========================
+    if (
+        typeof parsedResult.atsScore !== "number" ||
+        parsedResult.atsScore < 0 ||
+        parsedResult.atsScore > 100
+    ) {
+        throw new Error("Invalid ATS score format");
+    }
+
+    // Force score within bounds
     parsedResult.atsScore = Math.max(0, Math.min(100, parsedResult.atsScore));
+
+    // Ensure new fields exist (fallback protection)
+    parsedResult.sectionImpactAnalysis =
+        parsedResult.sectionImpactAnalysis || [];
+
+    parsedResult.topImprovementSection =
+        parsedResult.topImprovementSection || null;
 
     return parsedResult;
 };

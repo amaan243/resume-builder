@@ -141,132 +141,132 @@ export const generateInterviewQuestionsFromText = async (req, res) => {
     }
 };
 
-export const generateAllAnswers = async (req, res) => {
-    try {
-        const { questions, jobRole } = req.body;
-        const resume = req.resume;
+// export const generateAllAnswers = async (req, res) => {
+//     try {
+//         const { questions, jobRole } = req.body;
+//         const resume = req.resume;
 
-        const resumeText = truncateText(resumeToText(resume));
-        const flattened = flattenQuestions(questions);
+//         const resumeText = truncateText(resumeToText(resume));
+//         const flattened = flattenQuestions(questions);
 
-        if (flattened.length === 0) {
-            return res.status(400).json({ message: "Questions are required" });
-        }
+//         if (flattened.length === 0) {
+//             return res.status(400).json({ message: "Questions are required" });
+//         }
 
-        const answers = {
-            technical: [],
-            projectBased: [],
-            hr: [],
-        };
+//         const answers = {
+//             technical: [],
+//             projectBased: [],
+//             hr: [],
+//         };
 
-        for (const item of flattened) {
-            const messages = buildAnswerGenerationMessages({
-                resumeText,
-                jobRole,
-                question: item.question,
-            });
+//         for (const item of flattened) {
+//             const messages = buildAnswerGenerationMessages({
+//                 resumeText,
+//                 jobRole,
+//                 question: item.question,
+//             });
 
-            const response = await ai.chat.completions.create({
-                model: process.env.OPENAI_MODEL,
-                messages,
-                temperature: 0.4,
-            });
+//             const response = await ai.chat.completions.create({
+//                 model: process.env.OPENAI_MODEL,
+//                 messages,
+//                 temperature: 0.4,
+//             });
 
-            const answer = response.choices[0].message.content?.trim() || "";
+//             const answer = response.choices[0].message.content?.trim() || "";
 
-            if (item.category === "technical") {
-                answers.technical.push(answer);
-            } else if (item.category === "projectBased") {
-                answers.projectBased.push(answer);
-            } else if (item.category === "hr") {
-                answers.hr.push(answer);
-            }
-        }
+//             if (item.category === "technical") {
+//                 answers.technical.push(answer);
+//             } else if (item.category === "projectBased") {
+//                 answers.projectBased.push(answer);
+//             } else if (item.category === "hr") {
+//                 answers.hr.push(answer);
+//             }
+//         }
 
-        return res.status(200).json({ answers });
-    } catch (error) {
-        console.error("Generate All Answers Error:", error);
+//         return res.status(200).json({ answers });
+//     } catch (error) {
+//         console.error("Generate All Answers Error:", error);
         
-        if (error.status === 429) {
-            return res.status(429).json({ 
-                message: "Rate limit exceeded. Please wait a moment and try again." 
-            });
-        }
+//         if (error.status === 429) {
+//             return res.status(429).json({ 
+//                 message: "Rate limit exceeded. Please wait a moment and try again." 
+//             });
+//         }
         
-        if (error.status === 401) {
-            return res.status(401).json({ 
-                message: "OpenAI API authentication failed. Check your API key." 
-            });
-        }
+//         if (error.status === 401) {
+//             return res.status(401).json({ 
+//                 message: "OpenAI API authentication failed. Check your API key." 
+//             });
+//         }
         
-        return res.status(400).json({ message: error.message });
-    }
-};
+//         return res.status(400).json({ message: error.message });
+//     }
+// };
 
-export const generateAllAnswersFromText = async (req, res) => {
-    try {
-        const { questions, jobRole, resumeText } = req.body;
+// export const generateAllAnswersFromText = async (req, res) => {
+//     try {
+//         const { questions, jobRole, resumeText } = req.body;
 
-        if (!resumeText) {
-            return res.status(400).json({ message: "Resume text is required" });
-        }
+//         if (!resumeText) {
+//             return res.status(400).json({ message: "Resume text is required" });
+//         }
 
-        const trimmedText = truncateText(resumeText);
-        const flattened = flattenQuestions(questions);
+//         const trimmedText = truncateText(resumeText);
+//         const flattened = flattenQuestions(questions);
 
-        if (flattened.length === 0) {
-            return res.status(400).json({ message: "Questions are required" });
-        }
+//         if (flattened.length === 0) {
+//             return res.status(400).json({ message: "Questions are required" });
+//         }
 
-        const answers = {
-            technical: [],
-            projectBased: [],
-            hr: [],
-        };
+//         const answers = {
+//             technical: [],
+//             projectBased: [],
+//             hr: [],
+//         };
 
-        for (const item of flattened) {
-            const messages = buildAnswerGenerationMessages({
-                resumeText: trimmedText,
-                jobRole,
-                question: item.question,
-            });
+//         for (const item of flattened) {
+//             const messages = buildAnswerGenerationMessages({
+//                 resumeText: trimmedText,
+//                 jobRole,
+//                 question: item.question,
+//             });
 
-            const response = await ai.chat.completions.create({
-                model: process.env.OPENAI_MODEL,
-                messages,
-                temperature: 0.4,
-            });
+//             const response = await ai.chat.completions.create({
+//                 model: process.env.OPENAI_MODEL,
+//                 messages,
+//                 temperature: 0.4,
+//             });
 
-            const answer = response.choices[0].message.content?.trim() || "";
+//             const answer = response.choices[0].message.content?.trim() || "";
 
-            if (item.category === "technical") {
-                answers.technical.push(answer);
-            } else if (item.category === "projectBased") {
-                answers.projectBased.push(answer);
-            } else if (item.category === "hr") {
-                answers.hr.push(answer);
-            }
-        }
+//             if (item.category === "technical") {
+//                 answers.technical.push(answer);
+//             } else if (item.category === "projectBased") {
+//                 answers.projectBased.push(answer);
+//             } else if (item.category === "hr") {
+//                 answers.hr.push(answer);
+//             }
+//         }
 
-        return res.status(200).json({ answers });
-    } catch (error) {
-        console.error("Generate All Answers From Text Error:", error);
+//         return res.status(200).json({ answers });
+//     } catch (error) {
+//         console.error("Generate All Answers From Text Error:", error);
         
-        if (error.status === 429) {
-            return res.status(429).json({ 
-                message: "Rate limit exceeded. Please wait a moment and try again." 
-            });
-        }
+//         if (error.status === 429) {
+//             return res.status(429).json({ 
+//                 message: "Rate limit exceeded. Please wait a moment and try again." 
+//             });
+//         }
         
-        if (error.status === 401) {
-            return res.status(401).json({ 
-                message: "OpenAI API authentication failed. Check your API key." 
-            });
-        }
+//         if (error.status === 401) {
+//             return res.status(401).json({ 
+//                 message: "OpenAI API authentication failed. Check your API key." 
+//             });
+//         }
         
-        return res.status(400).json({ message: error.message });
-    }
-};
+//         return res.status(400).json({ message: error.message });
+//     }
+// };
 
 export const generateFollowUpQuestion = async (req, res) => {
     try {
