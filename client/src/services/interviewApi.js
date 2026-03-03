@@ -30,3 +30,8 @@ export const generateFollowUpFromText = (payload, token) =>
         headers: { Authorization: token },
     });
 
+export const evaluateInterviewAnswer = (payload, token) =>
+    api.post('/api/interview/evaluate-answer', payload, {
+        headers: { Authorization: token },
+    });
+

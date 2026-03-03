@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import {
+    evaluateInterviewAnswer,
     generateFollowUp,
     generateFollowUpFromText,
     generateInterviewQuestions,
@@ -50,9 +51,16 @@ const Interview = () => {
     );
     const [allResumes, setAllResumes] = React.useState([]);
     const [selectedResumeId, setSelectedResumeId] = React.useState('');
+    const [showAnswerBoxes, setShowAnswerBoxes] = React.useState({});
+    const [answerDrafts, setAnswerDrafts] = React.useState({});
+    const [evaluatingAnswers, setEvaluatingAnswers] = React.useState({});
+    const [answerEvaluations, setAnswerEvaluations] = React.useState({});
 
     const buildSessionId = () =>
         `session-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+
+    const getAnswerKey = (category, index, question) =>
+        `${category}-${index}-${question}`;
 
     const handleResumeUpload = async (file) => {
         if (!file) return;
@@ -66,6 +74,10 @@ const Interview = () => {
             setSelectedResumeId('');
             setQuestions(emptyGrouped);
             setFollowUps({});
+            setShowAnswerBoxes({});
+            setAnswerDrafts({});
+            setEvaluatingAnswers({});
+            setAnswerEvaluations({});
             toast.success('Resume uploaded for interview prep');
         } catch (error) {
             toast.error('Failed to read the PDF file');
@@ -114,6 +126,10 @@ const Interview = () => {
 
             setQuestions(data.questions || emptyGrouped);
             setFollowUps({});
+            setShowAnswerBoxes({});
+            setAnswerDrafts({});
+            setEvaluatingAnswers({});
+            setAnswerEvaluations({});
             toast.success('Questions generated');
         } catch (error) {
             toast.error(error?.response?.data?.message || error.message);
@@ -257,6 +273,33 @@ const Interview = () => {
         }
     };
 
+    const handleSubmitAnswer = async (category, index, question) => {
+        if (!token) return;
+
+        const answerKey = getAnswerKey(category, index, question);
+        const answer = answerDrafts[answerKey] || '';
+
+        if (!answer.trim()) {
+            toast.error('Write your answer before submitting');
+            return;
+        }
+
+        try {
+            setEvaluatingAnswers((prev) => ({ ...prev, [answerKey]: true }));
+            const { data } = await evaluateInterviewAnswer(
+                { question, answer: answer.trim() },
+                token
+            );
+
+            setAnswerEvaluations((prev) => ({ ...prev, [answerKey]: data }));
+            toast.success('Answer evaluated');
+        } catch (error) {
+            toast.error(error?.response?.data?.message || error.message);
+        } finally {
+            setEvaluatingAnswers((prev) => ({ ...prev, [answerKey]: false }));
+        }
+    };
+
     React.useEffect(() => {
         setSelectedResumeId(resumeId || '');
     }, [resumeId]);
@@ -273,12 +316,20 @@ const Interview = () => {
             setQuestions(emptyGrouped);
             setFollowUps({});
             setLoadingFollowUps({});
+            setShowAnswerBoxes({});
+            setAnswerDrafts({});
+            setEvaluatingAnswers({});
+            setAnswerEvaluations({});
             return;
         }
         setJobRole(stored.jobRole || '');
         setQuestions(stored.questions || emptyGrouped);
         setFollowUps(stored.followUps || {});
         setLoadingFollowUps({});
+        setShowAnswerBoxes(stored.showAnswerBoxes || {});
+        setAnswerDrafts(stored.answerDrafts || {});
+        setEvaluatingAnswers({});
+        setAnswerEvaluations(stored.answerEvaluations || {});
     }, [resumeId]);
 
     React.useEffect(() => {
@@ -292,6 +343,10 @@ const Interview = () => {
         setLoadingFollowUps({});
         setResumeText(stored.resumeText || '');
         setSessionId(stored.sessionId || '');
+        setShowAnswerBoxes(stored.showAnswerBoxes || {});
+        setAnswerDrafts(stored.answerDrafts || {});
+        setEvaluatingAnswers({});
+        setAnswerEvaluations(stored.answerEvaluations || {});
     }, [resumeId]);
 
     React.useEffect(() => {
@@ -303,9 +358,22 @@ const Interview = () => {
             followUps,
             resumeText,
             sessionId,
+            showAnswerBoxes,
+            answerDrafts,
+            answerEvaluations,
         };
         localStorage.setItem(uploadStorageKey, JSON.stringify(payload));
-    }, [sourceMode, jobRole, questions, followUps, resumeText, sessionId]);
+    }, [
+        sourceMode,
+        jobRole,
+        questions,
+        followUps,
+        resumeText,
+        sessionId,
+        showAnswerBoxes,
+        answerDrafts,
+        answerEvaluations,
+    ]);
 
     React.useEffect(() => {
         if (sourceMode !== 'saved') return;
@@ -316,12 +384,25 @@ const Interview = () => {
             jobRole,
             questions,
             followUps,
+            showAnswerBoxes,
+            answerDrafts,
+            answerEvaluations,
         };
         localStorage.setItem(
             `${resumeStoragePrefix}${activeResumeId}`,
             JSON.stringify(payload)
         );
-    }, [sourceMode, resumeId, selectedResumeId, jobRole, questions, followUps]);
+    }, [
+        sourceMode,
+        resumeId,
+        selectedResumeId,
+        jobRole,
+        questions,
+        followUps,
+        showAnswerBoxes,
+        answerDrafts,
+        answerEvaluations,
+    ]);
 
     React.useEffect(() => {
         if (sourceMode !== 'upload') return;
@@ -347,40 +428,133 @@ const Interview = () => {
                             key={`${categoryKey}-${index}`}
                             className='border border-slate-200 rounded-lg p-4'
                         >
+                            {(() => {
+                                const answerKey = getAnswerKey(categoryKey, index, question);
+                                const evaluation = answerEvaluations[answerKey];
+
+                                return (
+                                    <>
                             <p className='text-sm font-semibold text-slate-700'>
                                 Q{index + 1}. {question}
                             </p>
                             <div className='mt-4'>
-                                <button
-                                    disabled={
-                                        loadingFollowUps[question] ||
-                                        getTotalFollowUps(followUps) >= 3
-                                    }
-                                    onClick={() => handleFollowUp(categoryKey, question)}
-                                    className='text-xs px-3 py-1.5 rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50 transition disabled:opacity-60 disabled:cursor-not-allowed'
-                                >
-                                    {loadingFollowUps[question]
-                                        ? 'Generating...'
-                                        : 'Generate follow-up'}
-                                </button>
+                                <div className='flex flex-wrap items-center gap-2'>
+                                    <button
+                                        disabled={
+                                            loadingFollowUps[question] ||
+                                            getTotalFollowUps(followUps) >= 3
+                                        }
+                                        onClick={() => handleFollowUp(categoryKey, question)}
+                                        className='text-xs px-3 py-1.5 rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50 transition disabled:opacity-60 disabled:cursor-not-allowed'
+                                    >
+                                        {loadingFollowUps[question]
+                                            ? 'Generating...'
+                                            : 'Generate follow-up'}
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            setShowAnswerBoxes((prev) => ({
+                                                ...prev,
+                                                [answerKey]: !prev[answerKey],
+                                            }))
+                                        }
+                                        className='text-xs px-3 py-1.5 rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5'
+                                    >
+                                        <svg
+                                            className={`w-4 h-4 transition-transform ${
+                                                showAnswerBoxes[answerKey] ? 'rotate-90' : 'rotate-0'
+                                            }`}
+                                            fill='none'
+                                            stroke='currentColor'
+                                            viewBox='0 0 24 24'
+                                        >
+                                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
+                                        </svg>
+                                        Give Answer
+                                    </button>
+                                </div>
                                 {getTotalFollowUps(followUps) >= 3 && (
                                     <p className='mt-2 text-xs text-slate-500'>
                                         Follow-up limit reached (3 total).
                                     </p>
                                 )}
                             </div>
-                            {followUps[question] && followUps[question].length > 0 && (
-                                <div className='mt-3 space-y-2 border-l-2 border-slate-200 pl-4'>
-                                    {followUps[question].map((followUpItem, followIndex) => (
-                                        <p
-                                            key={`${question}-follow-${followIndex}`}
-                                            className='text-sm text-slate-600'
+                            {showAnswerBoxes[answerKey] && (
+                                <div className='mt-3 border border-slate-200 rounded-lg bg-slate-50 max-h-96 overflow-y-auto'>
+                                    <div className='p-3 space-y-3'>
+                                        <textarea
+                                            rows={4}
+                                            value={answerDrafts[answerKey] || ''}
+                                            onChange={(event) =>
+                                                setAnswerDrafts((prev) => ({
+                                                    ...prev,
+                                                    [answerKey]: event.target.value,
+                                                }))
+                                            }
+                                            placeholder='Write your interview answer...'
+                                            className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200'
+                                        />
+                                        <button
+                                            onClick={() =>
+                                                handleSubmitAnswer(categoryKey, index, question)
+                                            }
+                                            disabled={evaluatingAnswers[answerKey]}
+                                            className='text-xs px-3 py-1.5 rounded-full bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-60 w-full'
                                         >
-                                            Follow-up: {followUpItem}
-                                        </p>
-                                    ))}
+                                            {evaluatingAnswers[answerKey]
+                                                ? 'Evaluating...'
+                                                : 'Submit Answer'}
+                                        </button>
+                                        {followUps[question] && followUps[question].length > 0 && (
+                                            <div className='space-y-2 border-t border-slate-200 pt-3'>
+                                                <p className='text-xs font-semibold text-slate-700'>Follow-ups:</p>
+                                                {followUps[question].map((followUpItem, followIndex) => (
+                                                    <p
+                                                        key={`${question}-follow-${followIndex}`}
+                                                        className='text-xs text-slate-600 bg-white rounded p-2 border border-slate-200'
+                                                    >
+                                                        {followUpItem}
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {evaluation && (
+                                            <div className='border-t border-slate-200 pt-3 space-y-2'>
+                                                <p className='text-xs font-semibold text-slate-700'>Evaluation Results:</p>
+                                                <div className='bg-white rounded p-2 border border-slate-200 space-y-2'>
+                                                    <p className='text-xs text-slate-700'>
+                                                        Technical Depth: <span className='font-semibold'>{evaluation.technicalDepth} / 10</span>
+                                                    </p>
+                                                    <p className='text-xs text-slate-700'>
+                                                        Clarity: <span className='font-semibold'>{evaluation.clarity} / 10</span>
+                                                    </p>
+                                                    <p className='text-xs text-slate-700'>
+                                                        Confidence: <span className='font-semibold'>{evaluation.confidence} / 10</span>
+                                                    </p>
+                                                    <p className='text-xs text-slate-700'>
+                                                        Overall Score: <span className='font-semibold'>{evaluation.overallScore} / 10</span>
+                                                    </p>
+                                                </div>
+                                                <div className='bg-white rounded p-2 border border-slate-200'>
+                                                    <p className='text-xs font-semibold text-slate-700 mb-1'>Feedback:</p>
+                                                    <p className='text-xs text-slate-600'>{evaluation.feedback}</p>
+                                                </div>
+                                                <div className='bg-white rounded p-2 border border-slate-200'>
+                                                    <p className='text-xs font-semibold text-slate-700 mb-1'>Suggestions:</p>
+                                                    <ul className='list-disc pl-4 text-xs text-slate-600 space-y-1'>
+                                                        {(evaluation.suggestions || []).map((item, suggestionIndex) => (
+                                                            <li key={`${answerKey}-suggestion-${suggestionIndex}`}>{item}</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
+                                    </>
+                                );
+                            })()}
                         </div>
                     ))}
                 </div>
