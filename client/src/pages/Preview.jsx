@@ -38,7 +38,7 @@ const Preview = () => {
       {isLoading ? <Loder /> : (
         <div className='flex flex-col justify-center items-center h-screen '>
           <p className='text-center text-6xl text-slate-400 font-medium'>Resume not found</p>
-          <a href="/" className='mt-6 flex items-center text-white bg-green-500 hover:bg-green-600 rounded-full px-6 h-9 m-1 ring-offset-1 ring-1 ring-green-400 transition-colors'>
+          <a href="/" className='mt-6 flex items-center text-white bg-[#1E3A8A] hover:bg-[#1E40AF] rounded-xl px-6 h-9 m-1 ring-offset-1 ring-1 ring-[#60A5FA] transition-colors'>
             <ArrowLeftIcon className='mr-2 size-4'/>
             go to home page
           </a>

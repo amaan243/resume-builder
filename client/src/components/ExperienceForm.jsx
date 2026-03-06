@@ -63,7 +63,7 @@ const ExperienceForm = ({data, onChange}) => {
           <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-900'>Professional Experience</h3>
           <p className='text-sm text-gray-500'>Add  your job experience </p>
         </div>
-        <button onClick={addExperience} className='flex items-center gap-2  px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200  transition-colors '>
+        <button onClick={addExperience} className='flex items-center gap-2 px-3 py-1 text-sm bg-[#60A5FA]/20 text-[#1E3A8A] rounded-xl hover:bg-[#60A5FA]/30 transition-colors'>
           <Plus className='size-4'/>
           Add Experience
         </button>
@@ -98,7 +98,7 @@ const ExperienceForm = ({data, onChange}) => {
                     <div className='space-y-2'>
                       <div className='flex items-center justify-between'> 
                         <label className='text-sm font-medium text-gray-700' > Job Description</label>
-                        <button disabled={generatingIndex===index || !experience.position || !experience.company} onClick={()=>generateDescription(index)} className='flex items-center gap-1  px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200  transition-colors disabled:opacity-50'>
+                        <button disabled={generatingIndex===index || !experience.position || !experience.company} onClick={()=>generateDescription(index)} className='flex items-center gap-1 px-2 py-1 text-xs bg-[#60A5FA]/20 text-[#1E3A8A] rounded-lg hover:bg-[#60A5FA]/30 transition-colors disabled:opacity-50'>
                           {generatingIndex===index ? (
                             <Loader2 className='w-3 h-3 animate-spin'/>
                           ):( <Sparkles className='w-3 h-3'/>)}

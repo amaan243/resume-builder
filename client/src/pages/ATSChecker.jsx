@@ -124,9 +124,9 @@ const ATSChecker = () => {
   }, [token]);
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-gray-50 to-gray-100'>
+    <div className='min-h-screen bg-[#F8FAFC]'>
       {/* Header */}
-      <div className='bg-gradient-to-r from-green-600 to-green-700 text-white'>
+      <div className='bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white'>
         <div className='max-w-5xl mx-auto px-4 py-8'>
           <div className='flex items-center gap-4 mb-6'>
             <button
@@ -142,11 +142,11 @@ const ATSChecker = () => {
               </div>
               <div>
                 <h1 className='text-3xl font-bold'>ATS Resume Score</h1>
-                <p className='text-green-100 text-sm mt-1'>AI-Powered Resume Analysis</p>
+                <p className='text-white/90 text-sm mt-1'>AI-Powered Resume Analysis</p>
               </div>
             </div>
           </div>
-          <p className='text-green-100 text-sm max-w-2xl'>
+          <p className='text-white/90 text-sm max-w-2xl'>
             Optimize your resume to pass ATS (Applicant Tracking Systems) with our intelligent analysis tool. 
             Get detailed feedback on keywords, formatting, and more.
           </p>
@@ -155,15 +155,15 @@ const ATSChecker = () => {
 
       {/* Main Content */}
       <div className='max-w-5xl mx-auto px-4 py-8'>
-        <div className='bg-white rounded-xl shadow-lg overflow-hidden'>
+        <div className='bg-white rounded-xl shadow-lg overflow-hidden border border-[#E2E8F0]'>
           {/* Tabs */}
-          <div className='flex border-b border-gray-200 bg-gray-50 px-6'>
+          <div className='flex border-b border-[#E2E8F0] bg-[#F8FAFC] px-6'>
             <button
               onClick={() => setActiveTab('upload')}
               className={`px-4 py-4 font-medium transition-all ${
                 activeTab === 'upload'
-                  ? 'text-green-600 border-b-2 border-green-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-[#1E3A8A] border-b-2 border-[#1E3A8A]'
+                  : 'text-[#475569] hover:text-[#0F172A]'
               }`}
             >
               Upload Resume
@@ -173,8 +173,8 @@ const ATSChecker = () => {
               disabled={!atsResult}
               className={`px-4 py-4 font-medium transition-all ${
                 activeTab === 'results'
-                  ? 'text-green-600 border-b-2 border-green-600'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'text-[#1E3A8A] border-b-2 border-[#1E3A8A]'
+                  : 'text-[#475569] hover:text-[#0F172A]'
               } ${!atsResult && 'opacity-50 cursor-not-allowed'}`}
             >
               Analysis Results
@@ -192,8 +192,8 @@ const ATSChecker = () => {
                   <span
                     className={`text-xs font-semibold px-3 py-1 rounded-full ${
                       sourceMode === 'upload'
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-blue-100 text-blue-700'
+                        ? 'bg-[#60A5FA]/20 text-[#1E3A8A]'
+                        : 'bg-[#60A5FA]/20 text-[#1E3A8A]'
                     }`}
                   >
                     {sourceMode === 'upload' ? 'Uploaded PDF' : 'Saved resume'}
@@ -204,8 +204,8 @@ const ATSChecker = () => {
                       onClick={() => setSourceMode('saved')}
                       className={`text-xs px-3 py-1 rounded-full border transition ${
                         sourceMode === 'saved'
-                          ? 'border-blue-400 text-blue-700 bg-blue-50'
-                          : 'border-gray-200 text-gray-600 hover:bg-white'
+                          ? 'border-[#1E3A8A] text-[#1E3A8A] bg-[#60A5FA]/10'
+                          : 'border-[#E2E8F0] text-[#475569] hover:bg-white'
                       }`}
                     >
                       Use saved resume
@@ -215,8 +215,8 @@ const ATSChecker = () => {
                       onClick={() => setSourceMode('upload')}
                       className={`text-xs px-3 py-1 rounded-full border transition ${
                         sourceMode === 'upload'
-                          ? 'border-green-400 text-green-700 bg-green-50'
-                          : 'border-gray-200 text-gray-600 hover:bg-white'
+                          ? 'border-[#1E3A8A] text-[#1E3A8A] bg-[#60A5FA]/10'
+                          : 'border-[#E2E8F0] text-[#475569] hover:bg-white'
                       }`}
                     >
                       Use uploaded PDF
@@ -232,7 +232,7 @@ const ATSChecker = () => {
                     value={targetRole}
                     type='text'
                     placeholder='e.g., Software Engineer, Product Manager, Data Scientist'
-                    className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all'
+                    className='w-full px-4 py-3 border border-[#CBD5F5] rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-[#1E3A8A] transition-all'
                   />
                   <p className='text-xs text-gray-500 mt-1'>
                     Specify a role for more targeted feedback and keyword suggestions
@@ -247,7 +247,7 @@ const ATSChecker = () => {
                     <select
                       value={selectedResumeId}
                       onChange={(e) => setSelectedResumeId(e.target.value)}
-                      className='w-full border border-gray-300 rounded-lg px-3 py-3 text-sm bg-white'
+                      className='w-full border border-[#CBD5F5] rounded-lg px-3 py-3 text-sm bg-white'
                     >
                       <option value=''>Select a resume</option>
                       {allResumes.map((resumeItem) => (
@@ -278,13 +278,13 @@ const ATSChecker = () => {
                       />
                       <label
                         htmlFor='ats-resume-input'
-                        className='flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-300 rounded-lg p-12 hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all group'
+                        className='flex flex-col items-center justify-center gap-3 border-2 border-dashed border-[#E2E8F0] rounded-xl p-12 hover:border-[#1E3A8A] hover:bg-[#60A5FA]/10 cursor-pointer transition-all group'
                       >
                         {resume ? (
                           <div className='flex items-center gap-3'>
-                            <FileText className='size-10 text-green-600' />
+                            <FileText className='size-10 text-[#1E3A8A]' />
                             <div className='text-left'>
-                              <p className='text-green-600 font-semibold'>{resume.name}</p>
+                              <p className='text-[#1E3A8A] font-semibold'>{resume.name}</p>
                               <p className='text-sm text-gray-500'>
                                 {(resume.size / 1024).toFixed(2)} KB
                               </p>
@@ -292,7 +292,7 @@ const ATSChecker = () => {
                           </div>
                         ) : (
                           <>
-                            <UploadCloud className='size-16 text-gray-400 group-hover:text-green-500 transition-colors' />
+                            <UploadCloud className='size-16 text-[#475569] group-hover:text-[#1E3A8A] transition-colors' />
                             <div className='text-center'>
                               <p className='text-gray-700 font-semibold'>Click to upload resume</p>
                               <p className='text-sm text-gray-500 mt-1'>PDF format only • Max 10MB</p>
@@ -310,7 +310,7 @@ const ATSChecker = () => {
                     isAnalyzing ||
                     (sourceMode === 'upload' ? !resume : !selectedResumeId)
                   }
-                  className='w-full py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl'
+                  className='w-full py-3 bg-[#1E3A8A] text-white rounded-xl font-semibold hover:bg-[#1E40AF] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl'
                 >
                   {isAnalyzing ? (
                     <>
@@ -325,7 +325,7 @@ const ATSChecker = () => {
                   )}
                 </button>
 
-                <div className='bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3'>
+                <div className='bg-[#60A5FA]/10 border border-[#60A5FA]/30 rounded-xl p-4 flex gap-3'>
                   <div className='flex-shrink-0'>
                     <AlertCircle className='size-5 text-blue-600 mt-0.5' />
                   </div>
@@ -531,16 +531,16 @@ const ATSChecker = () => {
                 )}
 
                 {/* Action Buttons */}
-                <div className='flex gap-3 pt-6 border-t border-gray-200'>
+                <div className='flex gap-3 pt-6 border-t border-[#E2E8F0]'>
                   <button
                     onClick={resetForm}
-                    className='flex-1 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl'
+                    className='flex-1 py-3 bg-[#1E3A8A] text-white rounded-xl font-semibold hover:bg-[#1E40AF] transition-all shadow-lg hover:shadow-xl'
                   >
                     Analyze Another Resume
                   </button>
                   <button
                     onClick={() => navigate('/app')}
-                    className='px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors'
+                    className='px-6 py-3 bg-[#E2E8F0] text-[#0F172A] rounded-xl font-semibold hover:bg-[#CBD5F5] transition-colors'
                   >
                     Back to Dashboard
                   </button>

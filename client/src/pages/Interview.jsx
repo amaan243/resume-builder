@@ -458,7 +458,7 @@ const Interview = () => {
                                                 [answerKey]: !prev[answerKey],
                                             }))
                                         }
-                                        className='text-xs px-3 py-1.5 rounded-full border border-slate-300 text-slate-600 hover:bg-slate-50 transition flex items-center gap-1.5'
+                                        className='text-xs px-3 py-1.5 rounded-full border border-[#E2E8F0] text-[#475569] hover:bg-[#F8FAFC] transition flex items-center gap-1.5'
                                     >
                                         <svg
                                             className={`w-4 h-4 transition-transform ${
@@ -492,14 +492,14 @@ const Interview = () => {
                                                 }))
                                             }
                                             placeholder='Write your interview answer...'
-                                            className='w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200'
+                                            className='w-full border border-[#CBD5F5] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30'
                                         />
                                         <button
                                             onClick={() =>
                                                 handleSubmitAnswer(categoryKey, index, question)
                                             }
                                             disabled={evaluatingAnswers[answerKey]}
-                                            className='text-xs px-3 py-1.5 rounded-full bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-60 w-full'
+                                            className='text-xs px-3 py-1.5 rounded-full bg-[#1E3A8A] text-white hover:bg-[#1E40AF] transition disabled:opacity-60 w-full'
                                         >
                                             {evaluatingAnswers[answerKey]
                                                 ? 'Evaluating...'
@@ -575,7 +575,7 @@ const Interview = () => {
                 </div>
                 <button
                     onClick={() => navigate('/app')}
-                    className='px-4 py-2 rounded-lg text-sm border border-slate-300 text-slate-700 hover:bg-slate-50 transition'
+                    className='px-4 py-2 rounded-xl text-sm border border-[#E2E8F0] text-[#0F172A] hover:bg-[#F8FAFC] transition'
                 >
                     Back to Dashboard
                 </button>
@@ -643,7 +643,7 @@ const Interview = () => {
                         </button>
                     </div>
                     <div className='flex flex-col md:flex-row md:items-center gap-3'>
-                        <label className='inline-flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 cursor-pointer hover:border-slate-300'>
+                        <label className='inline-flex items-center gap-2 px-4 py-2 border border-[#E2E8F0] rounded-xl text-sm text-[#0F172A] cursor-pointer hover:border-[#CBD5F5]'>
                             <input
                                 type='file'
                                 accept='.pdf'
@@ -698,7 +698,7 @@ const Interview = () => {
                         <select
                             value={selectedResumeId}
                             onChange={(event) => setSelectedResumeId(event.target.value)}
-                            className='w-full md:max-w-sm border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white'
+                            className='w-full md:max-w-sm border border-[#CBD5F5] rounded-lg px-3 py-2 text-sm bg-white'
                         >
                             <option value=''>Choose a resume</option>
                             {allResumes.map((resume) => (
@@ -716,7 +716,7 @@ const Interview = () => {
                                 setSourceMode('saved');
                                 navigate(`/app/interview/${selectedResumeId}`);
                             }}
-                            className='px-4 py-2 rounded-lg text-sm border border-slate-300 text-slate-700 hover:bg-white'
+                            className='px-4 py-2 rounded-xl text-sm border border-[#E2E8F0] text-[#0F172A] hover:bg-white'
                         >
                             Use selected resume
                         </button>
@@ -738,14 +738,14 @@ const Interview = () => {
                             onChange={(event) => setJobRole(event.target.value)}
                             type='text'
                             placeholder='e.g. Frontend Engineer'
-                            className='mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-200'
+                            className='mt-2 w-full border border-[#CBD5F5] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1E3A8A]/30'
                         />
                     </div>
                     <div className='flex flex-wrap gap-3'>
                         <button
                             onClick={handleGenerateQuestions}
                             disabled={loadingQuestions || !jobRole.trim()}
-                            className='px-4 py-2 rounded-lg text-sm bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-60'
+                            className='px-4 py-2 rounded-xl text-sm bg-[#1E3A8A] text-white hover:bg-[#1E40AF] transition disabled:opacity-60'
                         >
                             {loadingQuestions ? 'Generating...' : 'Generate Questions'}
                         </button>

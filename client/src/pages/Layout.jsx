@@ -19,7 +19,7 @@ const Layout = () => {
   return (
     <div>
       {user ? (
-        <div className='min-h-screen bg-gray-50'>
+        <div className='min-h-screen bg-[#F8FAFC]'>
            {!isInterviewRoute && <Navbar />}
           <Outlet />
         </div>)

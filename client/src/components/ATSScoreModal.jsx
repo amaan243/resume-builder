@@ -96,7 +96,7 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
         className='relative bg-white rounded-xl shadow-2xl w-full max-w-4xl my-8 max-h-[90vh] overflow-y-auto'
       >
         {/* Header */}
-        <div className='sticky top-0 bg-gradient-to-r from-green-600 to-green-700 text-white p-6 rounded-t-xl'>
+        <div className='sticky top-0 bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white p-6 rounded-t-xl'>
           <div className='flex items-center justify-between'>
             <div className='flex items-center gap-3'>
               <div className='p-2 bg-white/20 rounded-lg'>
@@ -104,7 +104,7 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
               </div>
               <div>
                 <h2 className='text-2xl font-bold'>ATS Resume Score</h2>
-                <p className='text-green-100 text-sm'>AI-Powered Resume Analysis</p>
+                <p className='text-white/90 text-sm'>AI-Powered Resume Analysis</p>
               </div>
             </div>
             <button
@@ -117,13 +117,13 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
         </div>
 
         {/* Tabs */}
-        <div className='flex border-b border-gray-200 bg-gray-50 px-6'>
+        <div className='flex border-b border-[#E2E8F0] bg-[#F8FAFC] px-6'>
           <button
             onClick={() => setActiveTab('upload')}
             className={`px-4 py-3 font-medium transition-all ${
               activeTab === 'upload'
-                ? 'text-green-600 border-b-2 border-green-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-[#1E3A8A] border-b-2 border-[#1E3A8A]'
+                : 'text-[#475569] hover:text-[#0F172A]'
             }`}
           >
             Upload Resume
@@ -133,8 +133,8 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
             disabled={!atsResult}
             className={`px-4 py-3 font-medium transition-all ${
               activeTab === 'results'
-                ? 'text-green-600 border-b-2 border-green-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'text-[#1E3A8A] border-b-2 border-[#1E3A8A]'
+                : 'text-[#475569] hover:text-[#0F172A]'
             } ${!atsResult && 'opacity-50 cursor-not-allowed'}`}
           >
             Analysis Results
@@ -154,7 +154,7 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
                   value={targetRole}
                   type='text'
                   placeholder='e.g., Software Engineer, Product Manager'
-                  className='w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all'
+                  className='w-full px-4 py-2.5 border border-[#CBD5F5] rounded-lg focus:ring-2 focus:ring-[#1E3A8A] focus:border-[#1E3A8A] transition-all'
                 />
                 <p className='text-xs text-gray-500 mt-1'>
                   Specify a role for more targeted feedback
@@ -176,13 +176,13 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
                   />
                   <label
                     htmlFor='ats-resume-input'
-                    className='flex flex-col items-center justify-center gap-3 border-2 border-dashed border-gray-300 rounded-lg p-8 hover:border-green-500 hover:bg-green-50 cursor-pointer transition-all group'
+                    className='flex flex-col items-center justify-center gap-3 border-2 border-dashed border-[#E2E8F0] rounded-xl p-8 hover:border-[#1E3A8A] hover:bg-[#60A5FA]/10 cursor-pointer transition-all group'
                   >
                     {resume ? (
                       <div className='flex items-center gap-3'>
-                        <FileText className='size-8 text-green-600' />
+                        <FileText className='size-8 text-[#1E3A8A]' />
                         <div className='text-left'>
-                          <p className='text-green-600 font-medium'>{resume.name}</p>
+                          <p className='text-[#1E3A8A] font-medium'>{resume.name}</p>
                           <p className='text-sm text-gray-500'>
                             {(resume.size / 1024).toFixed(2)} KB
                           </p>
@@ -190,7 +190,7 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
                       </div>
                     ) : (
                       <>
-                        <UploadCloud className='size-12 text-gray-400 group-hover:text-green-500 transition-colors' />
+                        <UploadCloud className='size-12 text-[#475569] group-hover:text-[#1E3A8A] transition-colors' />
                         <div className='text-center'>
                           <p className='text-gray-600 font-medium'>Click to upload resume</p>
                           <p className='text-sm text-gray-400'>PDF format only</p>
@@ -204,7 +204,7 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
               <button
                 type='submit'
                 disabled={isAnalyzing || !resume}
-                className='w-full py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl'
+                className='w-full py-3 bg-[#1E3A8A] text-white rounded-xl font-medium hover:bg-[#1E40AF] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl'
               >
                 {isAnalyzing ? (
                   <>
@@ -219,7 +219,7 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
                 )}
               </button>
 
-              <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+              <div className='bg-[#60A5FA]/10 border border-[#60A5FA]/30 rounded-xl p-4'>
                 <p className='text-sm text-blue-800'>
                   <strong>Note:</strong> This analysis evaluates your resume against ATS standards.
                   Processing time: 10-30 seconds.
@@ -260,7 +260,7 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
 
               {/* Overall Feedback */}
               {atsResult.overallFeedback && (
-                <div className='bg-blue-50 border border-blue-200 rounded-lg p-4'>
+                <div className='bg-[#60A5FA]/10 border border-[#60A5FA]/30 rounded-xl p-4'>
                   <p className='text-sm text-blue-900'>{atsResult.overallFeedback}</p>
                 </div>
               )}
@@ -428,13 +428,13 @@ const ATSScoreModal = ({ isOpen, onClose, token }) => {
                   onClick={() => {
                     resetModal();
                   }}
-                  className='flex-1 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-medium hover:from-green-700 hover:to-green-800 transition-all shadow-lg hover:shadow-xl'
+                  className='flex-1 py-3 bg-[#1E3A8A] text-white rounded-xl font-medium hover:bg-[#1E40AF] transition-all shadow-lg hover:shadow-xl'
                 >
                   Analyze Another Resume
                 </button>
                 <button
                   onClick={handleClose}
-                  className='px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors'
+                  className='px-6 py-3 bg-[#E2E8F0] text-[#0F172A] rounded-xl font-medium hover:bg-[#CBD5F5] transition-colors'
                 >
                   Close
                 </button>

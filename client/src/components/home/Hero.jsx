@@ -12,31 +12,31 @@ const Hero = () => {
         <>
             <div className="pb-6">
                 {/* Navbar */}
-                <nav className="z-50 flex items-center justify-between w-full py-4 px-6 md:px-16 lg:px-24 xl:px-40 text-sm">
+                <nav className="z-50 flex items-center justify-between w-full py-4 px-6 md:px-16 lg:px-24 xl:px-40 text-sm bg-white">
                    
                         <img src='/logo.svg' alt='logo' className='h-11 w-auto'></img>
                     
 
-                    <div className="hidden md:flex items-center gap-8 transition duration-500 text-slate-800">
-                        <a href="#" className="hover:text-green-600 transition">Home</a>
-                        <a href="#features" className="hover:text-green-600 transition">Features</a>
-                        <a href="#testimonials" className="hover:text-green-600 transition">Testimonials</a>
-                        <a href="#cta" className="hover:text-green-600 transition">Contact</a>
+                    <div className="hidden md:flex items-center gap-8 transition duration-500 text-[#0F172A]">
+                        <a href="#" className="hover:text-[#1E3A8A] hover:bg-[#F8FAFC] px-3 py-2 rounded-lg transition">Home</a>
+                        <a href="#features" className="hover:text-[#1E3A8A] hover:bg-[#F8FAFC] px-3 py-2 rounded-lg transition">Features</a>
+                        <a href="#testimonials" className="hover:text-[#1E3A8A] hover:bg-[#F8FAFC] px-3 py-2 rounded-lg transition">Testimonials</a>
+                        <a href="#cta" className="hover:text-[#1E3A8A] hover:bg-[#F8FAFC] px-3 py-2 rounded-lg transition">Contact</a>
                     </div>
 
                     <div className="flex gap-2">
-                        <Link to="/app?state=register"  className="hidden md:block px-6 py-2 bg-green-500 hover:bg-green-700 active:scale-95 transition-all rounded-full text-white" hidden={user}>
+                        <Link to="/app?state=register"  className="hidden md:block px-6 py-2 bg-[#1E3A8A] hover:bg-[#1E40AF] active:scale-95 transition-all rounded-xl text-white font-medium" hidden={user}>
                             Get started
                         </Link>
-                        <Link to="/app?state=login" className="hidden md:block px-6 py-2 border active:scale-95 hover:bg-slate-50 transition-all rounded-full text-slate-700 hover:text-slate-900" hidden={user}>
+                        <Link to="/app?state=login" className="hidden md:block px-6 py-2 border border-[#E2E8F0] active:scale-95 hover:bg-[#F8FAFC] transition-all rounded-xl text-[#475569] hover:text-[#0F172A]" hidden={user}>
                             Login
                         </Link>
-                        <Link to='/app' className='hidden md:block px-8 py-2 bg-green-500 hover:bg-green-700 active:scale-95 transition-all rounded-full text-white' hidden={!user}>
+                        <Link to='/app' className='hidden md:block px-8 py-2 bg-[#1E3A8A] hover:bg-[#1E40AF] active:scale-95 transition-all rounded-xl text-white font-medium' hidden={!user}>
                            Dashboard
                         </Link>
                     </div>
 
-                    <button onClick={() => setMenuOpen(true)} className="md:hidden active:scale-90 transition" >
+                    <button onClick={() => setMenuOpen(true)} className="md:hidden active:scale-90 transition text-[#0F172A]" >
                         <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" className="lucide lucide-menu" >
                             <path d="M4 5h16M4 12h16M4 19h16" />
                         </svg>
@@ -49,14 +49,14 @@ const Hero = () => {
                     <a href="#features" className="text-white">Features</a>
                     <a href="#testimonials" className="text-white">Testimonials</a>
                     <a href="#cta" className="text-white">Contact</a>
-                    <button onClick={() => setMenuOpen(false)} className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center bg-green-600 hover:bg-green-700 transition text-white rounded-md flex" >
+                    <button onClick={() => setMenuOpen(false)} className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center bg-[#1E3A8A] hover:bg-[#1E40AF] transition text-white rounded-xl flex" >
                         X
                     </button>
                 </div>
 
                 {/* Hero Section */}
                 <div className="relative flex flex-col items-center justify-center text-sm px-4 md:px-16 lg:px-24 xl:px-40 text-black">
-                    <div className="absolute top-28 xl:top-10 -z-10 left-1/4 size-72 sm:size-96 xl:size-120 2xl:size-132 bg-green-300 blur-[100px] opacity-30"></div>
+                    <div className="absolute top-28 xl:top-10 -z-10 left-1/4 size-72 sm:size-96 xl:size-120 2xl:size-132 bg-[#60A5FA] blur-[100px] opacity-30"></div>
 
                     {/* Avatars + Stars */}
                     <div className="flex items-center mt-24">
@@ -71,7 +71,7 @@ const Hero = () => {
                         <div>
                             <div className="flex ">
                                 {Array(5).fill(0).map((_, i) => (
-                                    <svg key={i} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star text-transparent fill-green-600" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg>
+                                    <svg key={i} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-star text-transparent fill-[#1E3A8A]" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path></svg>
                                 ))}
                             </div>
                             <p className="text-sm text-gray-700">
@@ -82,29 +82,20 @@ const Hero = () => {
 
                     {/* Headline + CTA */}
                     <h1 className="text-5xl md:text-6xl font-semibold max-w-5xl text-center mt-4 md:leading-[70px]">
-                        Land your dream job with <span className=" bg-gradient-to-r from-green-700 to-green-600 bg-clip-text text-transparent text-nowrap">AI-powered </span> resumes.
+                        Land your dream job with <span className=" bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] bg-clip-text text-transparent text-nowrap">AI-powered </span> resumes.
                     </h1>
 
                     <p className="max-w-md text-center text-base my-6">Create, edit, and download professional  resume with AI-powered assistance.</p>
 
                     {/* CTA Buttons */}
                     <div className="flex items-center gap-4">
-                        <Link to='/app' className="bg-green-500 hover:bg-green-600 text-white rounded-full px-9 h-12 m-1 ring-offset-2 ring-1 ring-green-400 flex items-center transition-colors">
+                        <Link to='/app' className="bg-[#1E3A8A] hover:bg-[#1E40AF] text-white rounded-xl px-9 h-12 m-1 ring-offset-2 ring-1 ring-[#60A5FA] flex items-center transition-colors">
                             Get started
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right ml-1 size-4" aria-hidden="true"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
                         </Link>
                     </div>
                 </div>
             </div>
-            <style>
-                {`
-                    @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
-
-                    * {
-                        font-family: 'Poppins', sans-serif;
-                    }
-                `}
-            </style>
         </>
     )
 }

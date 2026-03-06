@@ -45,7 +45,7 @@ const ProfessionalSummaryForm = ({ data, onChange ,setResumeData}) => {
           <h3 className='flex items-center gap-2 text-lg font-semibold text-gray-900'>Professional Summary</h3>
           <p className='text-sm text-gray-500'>Add Summary for your resume here</p>
         </div>
-        <button disabled={isGenerating} onClick={genrateSummary} className='flex items-center gap-2  px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-50  transition-colors disabled:opacity-50'>
+        <button disabled={isGenerating} onClick={genrateSummary} className='flex items-center gap-2 px-3 py-1 text-sm bg-[#60A5FA]/20 text-[#1E3A8A] rounded-xl hover:bg-[#60A5FA]/30 transition-colors disabled:opacity-50'>
           {isGenerating ? (
             <Loader2 className='size-4 animate-spin'/>
           ):(<Sparkles className='size-4'/>)}

@@ -1,18 +1,45 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Plus+Jakarta+Sans:wght@200..800&display=swap');
 @import "tailwindcss";
+@import "@fontsource/inter";
 
-*{
-  font-family: "Outfit", sans-serif;
+@theme {
+  /* Deep Blue + Slate Theme */
+  --color-primary: #1E3A8A;
+  --color-primary-hover: #1E40AF;
+  --color-secondary: #3B82F6;
+  --color-secondary-hover: #2563EB;
+  --color-accent: #60A5FA;
+  --color-bg: #F8FAFC;
+  --color-card: #FFFFFF;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-border: #E2E8F0;
+  --color-input-border: #CBD5F5;
+  --font-sans: "Inter", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --primary: #1E3A8A;
+  --secondary: #3B82F6;
+  --accent: #60A5FA;
+  --bg: #F8FAFC;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --border: #E2E8F0;
+}
+
+* {
+  font-family: "Inter", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
-  button{
+  button {
     @apply cursor-pointer;
   }
-  input:not([type="checkbox"]){
-    @apply outline-none focus:ring border border-gray-300   focus:ring-blue-500 focus:border-blue-500 rounded-lg;
+  input:not([type="checkbox"]) {
+    @apply outline-none rounded-lg border border-[#CBD5F5] focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A];
   }
-  textarea{
-    @apply outline-none focus:ring border border-gray-300   focus:ring-blue-500 focus:border-blue-500 rounded-lg resize-none;
+  textarea {
+    @apply outline-none rounded-lg border border-[#CBD5F5] focus:ring-2 focus:ring-[#1E3A8A]/30 focus:border-[#1E3A8A] resize-none;
   }
 }
