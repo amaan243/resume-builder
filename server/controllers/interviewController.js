@@ -14,6 +14,36 @@ import {
     truncateText,
 } from "../utils/interviewUtils.js";
 
+const FOLLOW_UP_LIMIT = 3;
+const FOLLOW_UP_WINDOW_HOURS = 12;
+const MORE_QUESTIONS_WINDOW_HOURS = 24;
+// Compatibility cutoff: ignore follow-up usage tracked before the rolling-window feature rollout.
+const FOLLOW_UP_WINDOW_FEATURE_START = new Date("2026-03-12T00:00:00.000Z");
+
+const getFollowUpWindowStart = () =>
+    new Date(
+        Math.max(
+            Date.now() - FOLLOW_UP_WINDOW_HOURS * 60 * 60 * 1000,
+            FOLLOW_UP_WINDOW_FEATURE_START.getTime()
+        )
+    );
+
+const getMoreQuestionsLock = (resume) => {
+    const lastGenerated = resume?.moreQuestionsLastGeneratedAt;
+    if (!lastGenerated) {
+        return { isLocked: false, lockedUntil: null };
+    }
+
+    const lockedUntil = new Date(
+        new Date(lastGenerated).getTime() + MORE_QUESTIONS_WINDOW_HOURS * 60 * 60 * 1000
+    );
+
+    return {
+        isLocked: Date.now() < lockedUntil.getTime(),
+        lockedUntil,
+    };
+};
+
 const normalizeQuestionPayload = (payload) => {
     return {
         technical: Array.isArray(payload?.technical) ? payload.technical : [],
@@ -79,6 +109,87 @@ export const generateInterviewQuestions = async (req, res) => {
             });
         }
         
+        return res.status(400).json({ message: error.message });
+    }
+};
+
+export const generateMoreInterviewQuestions = async (req, res) => {
+    try {
+        const { jobRole, previousQuestions } = req.body;
+        const resume = req.resume;
+
+        if (!jobRole || jobRole.trim().length === 0) {
+            return res.status(400).json({ message: "Job role is required" });
+        }
+
+        if (!resume) {
+            return res.status(400).json({ message: "Resume not found" });
+        }
+
+        const { isLocked, lockedUntil } = getMoreQuestionsLock(resume);
+        if (isLocked) {
+            return res.status(429).json({
+                message: `More questions are available after ${MORE_QUESTIONS_WINDOW_HOURS} hours for this resume.`,
+                lockedUntil,
+            });
+        }
+
+        const resumeText = truncateText(resumeToText(resume));
+        const score = calculateDepthScore(resume);
+        const counts = buildQuestionCounts(score);
+        const flattenedPreviousQuestions = flattenQuestions(previousQuestions).map(
+            (item) => item.question
+        );
+
+        const messages = buildQuestionGenerationMessages({
+            resumeText,
+            jobRole,
+            counts,
+            previousQuestions: flattenedPreviousQuestions,
+        });
+
+        const response = await ai.chat.completions.create({
+            model: process.env.OPENAI_MODEL,
+            messages,
+            response_format: { type: "json_object" },
+            temperature: 0.5,
+        });
+
+        const raw = response.choices[0].message.content;
+        const parsed = normalizeQuestionPayload(JSON.parse(raw || "{}"));
+
+        const questions = {
+            technical: parsed.technical.slice(0, counts.technical),
+            projectBased: parsed.projectBased.slice(0, counts.projectBased),
+            hr: parsed.hr.slice(0, counts.hr),
+        };
+
+        resume.moreQuestionsLastGeneratedAt = new Date();
+        await resume.save();
+
+        const { lockedUntil: nextLockedUntil } = getMoreQuestionsLock(resume);
+
+        return res.status(200).json({
+            questions,
+            counts,
+            score,
+            lockedUntil: nextLockedUntil,
+        });
+    } catch (error) {
+        console.error("More Interview Questions Error:", error);
+
+        if (error.status === 429) {
+            return res.status(429).json({
+                message: "Rate limit exceeded. Please wait a moment and try again.",
+            });
+        }
+
+        if (error.status === 401) {
+            return res.status(401).json({
+                message: "OpenAI API authentication failed. Check your API key.",
+            });
+        }
+
         return res.status(400).json({ message: error.message });
     }
 };
@@ -273,6 +384,7 @@ export const generateFollowUpQuestion = async (req, res) => {
         const { question, jobRole, category } = req.body;
         const resume = req.resume;
         const userId = req.userId;
+        const windowStart = getFollowUpWindowStart();
 
         if (!question) {
             return res.status(400).json({ message: "Base question is required" });
@@ -282,18 +394,21 @@ export const generateFollowUpQuestion = async (req, res) => {
             userId,
             resumeId: resume._id,
             baseQuestion: question,
+            updatedAt: { $gte: windowStart },
         });
 
         const followUpTotals = await FollowUpTracking.aggregate([
-            { $match: { userId, resumeId: resume._id } },
+            { $match: { userId, resumeId: resume._id, updatedAt: { $gte: windowStart } } },
             { $group: { _id: null, total: { $sum: "$followUpCount" } } },
         ]);
         const totalFollowUps = followUpTotals[0]?.total || 0;
 
-        if (totalFollowUps >= 3) {
+        if (totalFollowUps >= FOLLOW_UP_LIMIT) {
             return res
                 .status(400)
-                .json({ message: "Follow-up limit reached for this resume" });
+                .json({
+                    message: `Follow-up limit reached for this resume. Try again after ${FOLLOW_UP_WINDOW_HOURS} hours.`,
+                });
         }
 
         const resumeText = truncateText(resumeToText(resume));
@@ -347,6 +462,7 @@ export const generateFollowUpQuestionFromText = async (req, res) => {
     try {
         const { question, jobRole, category, resumeText, sessionId } = req.body;
         const userId = req.userId;
+        const windowStart = getFollowUpWindowStart();
 
         if (!question) {
             return res.status(400).json({ message: "Base question is required" });
@@ -364,18 +480,21 @@ export const generateFollowUpQuestionFromText = async (req, res) => {
             userId,
             sessionId,
             baseQuestion: question,
+            updatedAt: { $gte: windowStart },
         });
 
         const followUpTotals = await FollowUpTracking.aggregate([
-            { $match: { userId, sessionId } },
+            { $match: { userId, sessionId, updatedAt: { $gte: windowStart } } },
             { $group: { _id: null, total: { $sum: "$followUpCount" } } },
         ]);
         const totalFollowUps = followUpTotals[0]?.total || 0;
 
-        if (totalFollowUps >= 3) {
+        if (totalFollowUps >= FOLLOW_UP_LIMIT) {
             return res
                 .status(400)
-                .json({ message: "Follow-up limit reached for this session" });
+                .json({
+                    message: `Follow-up limit reached for this session. Try again after ${FOLLOW_UP_WINDOW_HOURS} hours.`,
+                });
         }
 
         const trimmedText = truncateText(resumeText);

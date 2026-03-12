@@ -6,6 +6,7 @@ import {
     evaluateInterviewAnswer,
     generateFollowUp,
     generateFollowUpFromText,
+    generateMoreInterviewQuestions,
     generateInterviewQuestions,
     generateInterviewQuestionsFromText,
 } from '../services/interviewApi';
@@ -17,6 +18,7 @@ import html2canvas from 'html2canvas';
 const emptyGrouped = { technical: [], projectBased: [], hr: [] };
 const uploadStorageKey = 'interviewUploadState';
 const resumeStoragePrefix = 'interviewResumeState:';
+const MORE_QUESTIONS_WINDOW_HOURS = 24;
 
 const safeParse = (value) => {
     if (!value) return null;
@@ -55,12 +57,26 @@ const Interview = () => {
     const [answerDrafts, setAnswerDrafts] = React.useState({});
     const [evaluatingAnswers, setEvaluatingAnswers] = React.useState({});
     const [answerEvaluations, setAnswerEvaluations] = React.useState({});
+    const [loadingMoreQuestions, setLoadingMoreQuestions] = React.useState(false);
+    const [moreQuestionsLockByResume, setMoreQuestionsLockByResume] = React.useState({});
 
     const buildSessionId = () =>
         `session-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 
     const getAnswerKey = (category, index, question) =>
         `${category}-${index}-${question}`;
+
+    const getActiveResumeId = () => selectedResumeId || resumeId || '';
+
+    const hasAnyQuestions =
+        questions.technical.length > 0 ||
+        questions.projectBased.length > 0 ||
+        questions.hr.length > 0;
+
+    const currentMoreQuestionsLockUntil = moreQuestionsLockByResume[getActiveResumeId()];
+    const isMoreQuestionsLocked =
+        Boolean(currentMoreQuestionsLockUntil) &&
+        Date.now() < new Date(currentMoreQuestionsLockUntil).getTime();
 
     const handleResumeUpload = async (file) => {
         if (!file) return;
@@ -90,7 +106,20 @@ const Interview = () => {
             const { data } = await api.get('/api/users/resumes', {
                 headers: { Authorization: token },
             });
-            setAllResumes(data.resumes || []);
+            const resumes = data.resumes || [];
+            setAllResumes(resumes);
+
+            const lockMap = resumes.reduce((acc, resume) => {
+                if (!resume?.moreQuestionsLastGeneratedAt) return acc;
+                const lockedUntil = new Date(
+                    new Date(resume.moreQuestionsLastGeneratedAt).getTime() +
+                        MORE_QUESTIONS_WINDOW_HOURS * 60 * 60 * 1000
+                ).toISOString();
+                acc[resume._id] = lockedUntil;
+                return acc;
+            }, {});
+
+            setMoreQuestionsLockByResume((prev) => ({ ...prev, ...lockMap }));
         } catch (error) {
             toast.error(error?.response?.data?.message || error.message);
         }
@@ -99,7 +128,7 @@ const Interview = () => {
     const handleGenerateQuestions = async () => {
         if (!token) return;
         if (sourceMode === 'saved') {
-            const activeResumeId = resumeId || selectedResumeId;
+            const activeResumeId = getActiveResumeId();
             if (!activeResumeId) {
                 toast.error('Select a saved resume or upload a PDF');
                 return;
@@ -115,7 +144,7 @@ const Interview = () => {
         }
         setLoadingQuestions(true);
         try {
-            const activeResumeId = resumeId || selectedResumeId;
+            const activeResumeId = getActiveResumeId();
             const payload = sourceMode === 'upload'
                 ? { resumeText, jobRole, sessionId }
                 : { resumeId: activeResumeId, jobRole };
@@ -135,6 +164,85 @@ const Interview = () => {
             toast.error(error?.response?.data?.message || error.message);
         }
         setLoadingQuestions(false);
+    };
+
+    const handleGenerateMoreQuestions = async () => {
+        if (!token) return;
+        if (sourceMode !== 'saved') {
+            toast.error('Generate more questions is available only for saved resumes');
+            return;
+        }
+
+        const activeResumeId = getActiveResumeId();
+        if (!activeResumeId) {
+            toast.error('Select a resume first');
+            return;
+        }
+
+        if (!jobRole || jobRole.trim().length === 0) {
+            toast.error('Enter a job role');
+            return;
+        }
+
+        if (!hasAnyQuestions) {
+            toast.error('Generate initial questions first');
+            return;
+        }
+
+        if (isMoreQuestionsLocked) {
+            toast.error('Generate more questions is locked for this resume for 24 hours');
+            return;
+        }
+
+        const previousQuestions = {
+            technical: questions.technical,
+            projectBased: questions.projectBased,
+            hr: questions.hr,
+        };
+
+        try {
+            setLoadingMoreQuestions(true);
+            const { data } = await generateMoreInterviewQuestions(
+                {
+                    resumeId: activeResumeId,
+                    jobRole,
+                    previousQuestions,
+                },
+                token
+            );
+
+            setQuestions((prev) => ({
+                technical: [...(prev.technical || []), ...(data?.questions?.technical || [])],
+                projectBased: [
+                    ...(prev.projectBased || []),
+                    ...(data?.questions?.projectBased || []),
+                ],
+                hr: [...(prev.hr || []), ...(data?.questions?.hr || [])],
+            }));
+
+            const lockUntil =
+                data?.lockedUntil ||
+                new Date(
+                    Date.now() + MORE_QUESTIONS_WINDOW_HOURS * 60 * 60 * 1000
+                ).toISOString();
+
+            setMoreQuestionsLockByResume((prev) => ({
+                ...prev,
+                [activeResumeId]: lockUntil,
+            }));
+            toast.success('More questions generated');
+        } catch (error) {
+            const lockedUntil = error?.response?.data?.lockedUntil;
+            if (lockedUntil) {
+                setMoreQuestionsLockByResume((prev) => ({
+                    ...prev,
+                    [activeResumeId]: lockedUntil,
+                }));
+            }
+            toast.error(error?.response?.data?.message || error.message);
+        } finally {
+            setLoadingMoreQuestions(false);
+        }
     };
 
     const downloadInterviewPDF = async () => {
@@ -239,7 +347,7 @@ const Interview = () => {
             return;
         }
         if (sourceMode === 'saved') {
-            const activeResumeId = resumeId || selectedResumeId;
+            const activeResumeId = getActiveResumeId();
             if (!activeResumeId) {
                 toast.error('Select a saved resume or upload a PDF');
                 return;
@@ -251,7 +359,7 @@ const Interview = () => {
         }
         try {
             setLoadingFollowUps((prev) => ({ ...prev, [question]: true }));
-            const activeResumeId = resumeId || selectedResumeId;
+            const activeResumeId = getActiveResumeId();
             const payload = sourceMode === 'upload'
                 ? { resumeText, question, category, jobRole, sessionId }
                 : { resumeId: activeResumeId, question, category, jobRole };
@@ -305,12 +413,25 @@ const Interview = () => {
     }, [resumeId]);
 
     React.useEffect(() => {
-        if (!resumeId) return;
+        if (sourceMode !== 'saved') return;
+
+        const activeSavedResumeId = getActiveResumeId();
+        if (!activeSavedResumeId) {
+            setJobRole('');
+            setQuestions(emptyGrouped);
+            setFollowUps({});
+            setLoadingFollowUps({});
+            setShowAnswerBoxes({});
+            setAnswerDrafts({});
+            setEvaluatingAnswers({});
+            setAnswerEvaluations({});
+            return;
+        }
+
         const stored = safeParse(
-            localStorage.getItem(`${resumeStoragePrefix}${resumeId}`)
+            localStorage.getItem(`${resumeStoragePrefix}${activeSavedResumeId}`)
         );
-        setSourceMode('saved');
-        setSelectedResumeId(resumeId);
+
         if (!stored) {
             setJobRole('');
             setQuestions(emptyGrouped);
@@ -322,6 +443,7 @@ const Interview = () => {
             setAnswerEvaluations({});
             return;
         }
+
         setJobRole(stored.jobRole || '');
         setQuestions(stored.questions || emptyGrouped);
         setFollowUps(stored.followUps || {});
@@ -330,7 +452,7 @@ const Interview = () => {
         setAnswerDrafts(stored.answerDrafts || {});
         setEvaluatingAnswers({});
         setAnswerEvaluations(stored.answerEvaluations || {});
-    }, [resumeId]);
+    }, [sourceMode, resumeId, selectedResumeId]);
 
     React.useEffect(() => {
         if (resumeId) return;
@@ -377,7 +499,7 @@ const Interview = () => {
 
     React.useEffect(() => {
         if (sourceMode !== 'saved') return;
-        const activeResumeId = resumeId || selectedResumeId;
+        const activeResumeId = getActiveResumeId();
         if (!activeResumeId) return;
         const payload = {
             sourceMode: 'saved',
@@ -414,7 +536,9 @@ const Interview = () => {
         loadResumes();
     }, [token]);
 
-    const selectedResume = allResumes.find((resume) => resume._id === resumeId);
+    const selectedResume = allResumes.find(
+        (resume) => resume._id === getActiveResumeId()
+    );
 
     const renderQuestionBlock = (label, items, categoryKey) => (
         <div className='bg-white border border-slate-200 rounded-lg p-5 shadow-sm'>
@@ -749,6 +873,22 @@ const Interview = () => {
                         >
                             {loadingQuestions ? 'Generating...' : 'Generate Questions'}
                         </button>
+                        {sourceMode === 'saved' && (
+                            <button
+                                onClick={handleGenerateMoreQuestions}
+                                disabled={
+                                    loadingMoreQuestions ||
+                                    loadingQuestions ||
+                                    !jobRole.trim() ||
+                                    !getActiveResumeId() ||
+                                    !hasAnyQuestions ||
+                                    isMoreQuestionsLocked
+                                }
+                                className='px-4 py-2 rounded-xl text-sm border border-[#1E3A8A] text-[#1E3A8A] hover:bg-blue-50 transition disabled:opacity-60 disabled:cursor-not-allowed'
+                            >
+                                {loadingMoreQuestions ? 'Generating More...' : 'Generate More Questions'}
+                            </button>
+                        )}
                         {(questions.technical.length > 0 || questions.projectBased.length > 0 || questions.hr.length > 0) && (
                             <button
                                 onClick={downloadInterviewPDF}
@@ -762,6 +902,12 @@ const Interview = () => {
                         )}
                     </div>
                 </div>
+                {sourceMode === 'saved' && isMoreQuestionsLocked && (
+                    <p className='text-xs text-slate-500'>
+                        Generate More Questions is locked for this resume until{' '}
+                        {new Date(currentMoreQuestionsLockUntil).toLocaleString()}.
+                    </p>
+                )}
             </div>
 
             <div className='grid lg:grid-cols-3 gap-6'>

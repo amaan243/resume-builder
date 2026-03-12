@@ -7,6 +7,7 @@ import {
 	
 	generateFollowUpQuestion,
 	generateFollowUpQuestionFromText,
+	generateMoreInterviewQuestions,
 	generateInterviewQuestions,
 	generateInterviewQuestionsFromText,
 } from '../controllers/interviewController.js';
@@ -19,6 +20,7 @@ aiRouter.post('/upload-resume',protect,uploadResume);
 aiRouter.post('/ats-score',protect,getATSScore);
 aiRouter.post('/ats-score-resume', protect, validateResumeOwnership, getATSScoreFromResume);
 aiRouter.post('/interview-questions', protect, validateResumeOwnership, generateInterviewQuestions);
+aiRouter.post('/interview-questions-more', protect, validateResumeOwnership, generateMoreInterviewQuestions);
 
 aiRouter.post('/followup-question', protect, validateResumeOwnership, generateFollowUpQuestion);
 aiRouter.post('/interview-questions-text', protect, generateInterviewQuestionsFromText);

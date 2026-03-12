@@ -1,5 +1,23 @@
-export const buildQuestionGenerationMessages = ({ resumeText, jobRole, counts }) => {
+export const buildQuestionGenerationMessages = ({
+    resumeText,
+    jobRole,
+    counts,
+    previousQuestions = [],
+}) => {
     const roleLine = jobRole ? `Target role: ${jobRole}` : "Target role: not provided";
+    const cleanedPrevious = Array.isArray(previousQuestions)
+        ? previousQuestions
+              .filter((question) => typeof question === "string" && question.trim().length > 0)
+              .map((question) => question.trim())
+              .slice(0, 60)
+        : [];
+
+    const previousQuestionsSection =
+        cleanedPrevious.length > 0
+            ? `\n\nPreviously generated questions (do not repeat these, and avoid close paraphrases):\n${cleanedPrevious
+                  .map((question, index) => `${index + 1}. ${question}`)
+                  .join("\n")}`
+            : "";
 
     return [
         {
@@ -16,12 +34,19 @@ export const buildQuestionGenerationMessages = ({ resumeText, jobRole, counts })
 Resume Text:
 ${resumeText}
 
+${
+    cleanedPrevious.length > 0
+        ? "Generate a fresh set that is meaningfully different from the previously generated set."
+        : ""
+}
+
 Requirements:
 - Technical questions: ${counts.technical}
 - Project-based questions: ${counts.projectBased}
 - HR/Behavioral questions: ${counts.hr}
 - Each item must be a single question.
 - Keep questions concise and role-relevant.
+- Do not repeat or closely rephrase any previously generated question.${previousQuestionsSection}
 
 Return JSON only in this format:
 {

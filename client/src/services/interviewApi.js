@@ -5,6 +5,11 @@ export const generateInterviewQuestions = (payload, token) =>
         headers: { Authorization: token },
     });
 
+export const generateMoreInterviewQuestions = (payload, token) =>
+    api.post('/api/ai/interview-questions-more', payload, {
+        headers: { Authorization: token },
+    });
+
 export const generateInterviewQuestionsFromText = (payload, token) =>
     api.post('/api/ai/interview-questions-text', payload, {
         headers: { Authorization: token },

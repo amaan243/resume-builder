@@ -89,6 +89,10 @@ const ResumeSchema = new mongoose.Schema({
         graduation_date:{type: String},
         gpa:{type: String},
     }],
+    moreQuestionsLastGeneratedAt: {
+        type: Date,
+        default: null,
+    },
 
 }, { timestamps: true ,minimize:false});
 
