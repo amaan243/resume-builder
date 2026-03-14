@@ -26,7 +26,11 @@ const ResumePreview = ({ data, template, accentColor, classes = '' }) => {
 
     return (
         <div className='w-full bg-gray-100'>
-            <div id='resume-preview' className={"border border-gray-200 print:shadow-none print:border-none" + classes}>
+            <div
+                id='resume-preview'
+                data-template={template}
+                className={"border border-gray-200 print:shadow-none print:border-none" + classes}
+            >
                 {renderTemplate()}
             </div>
 
@@ -68,6 +72,13 @@ const ResumePreview = ({ data, template, accentColor, classes = '' }) => {
                 top:0;
                 margin:0;
                 padding:0;
+              }
+
+              /* SWE one-page: print at same size as preview (no extra scaling) */
+              #resume-preview[data-template="swe-onepage"]{
+                zoom: 1;
+                transform: none;
+                width: 100%;
               }
             }  
           `}
