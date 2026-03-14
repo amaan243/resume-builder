@@ -42,6 +42,10 @@ const ResumePreview = ({ data, template, accentColor, classes = '' }) => {
                 height: 11in;
                 overflow: hidden;
              }
+             html {
+               -webkit-print-color-adjust: exact;
+               print-color-adjust: exact;
+             }
                 body *{
                   visibility: hidden;
                   }
@@ -52,7 +56,12 @@ const ResumePreview = ({ data, template, accentColor, classes = '' }) => {
               #resume-preview{
                 box-shadow:none !important;
                 border:none !important;
-                width:100%;
+                background: #fff !important;
+                /* Scale down print output so templates fit like preview */
+                zoom: 0.92;
+                transform: scale(0.92);
+                transform-origin: top left;
+                width: calc(100% / 0.92);
                 height:auto;
                 position: absolute;
                 left:0;
