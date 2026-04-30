@@ -18,6 +18,7 @@ import html2canvas from 'html2canvas';
 const emptyGrouped = { technical: [], projectBased: [], hr: [] };
 const uploadStorageKey = 'interviewUploadState';
 const resumeStoragePrefix = 'interviewResumeState:';
+const savedSelectionStorageKey = 'interviewSavedSelection';
 const MORE_QUESTIONS_WINDOW_HOURS = 24;
 
 const safeParse = (value) => {
@@ -59,6 +60,7 @@ const Interview = () => {
     const [answerEvaluations, setAnswerEvaluations] = React.useState({});
     const [loadingMoreQuestions, setLoadingMoreQuestions] = React.useState(false);
     const [moreQuestionsLockByResume, setMoreQuestionsLockByResume] = React.useState({});
+    const [selectionHydrated, setSelectionHydrated] = React.useState(false);
 
     const buildSessionId = () =>
         `session-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
@@ -408,12 +410,64 @@ const Interview = () => {
         }
     };
 
+    // Initialize from localStorage on mount
+    React.useEffect(() => {
+        if (resumeId) {
+            setSelectedResumeId(resumeId);
+            setSelectionHydrated(true);
+            return;
+        }
+
+        // Try to restore upload mode data first
+        const uploadData = safeParse(localStorage.getItem(uploadStorageKey));
+        if (uploadData && uploadData.sourceMode === 'upload') {
+            setSourceMode('upload');
+            setJobRole(uploadData.jobRole || '');
+            setQuestions(uploadData.questions || emptyGrouped);
+            setFollowUps(uploadData.followUps || {});
+            setResumeText(uploadData.resumeText || '');
+            setSessionId(uploadData.sessionId || '');
+            setShowAnswerBoxes(uploadData.showAnswerBoxes || {});
+            setAnswerDrafts(uploadData.answerDrafts || {});
+            setAnswerEvaluations(uploadData.answerEvaluations || {});
+            setSelectionHydrated(true);
+            return;
+        }
+
+        // Try to restore saved resume mode data
+        const savedSelection = safeParse(localStorage.getItem(savedSelectionStorageKey));
+        if (savedSelection?.sourceMode === 'saved' && savedSelection?.selectedResumeId) {
+            const resumeData = safeParse(
+                localStorage.getItem(`${resumeStoragePrefix}${savedSelection.selectedResumeId}`)
+            );
+            if (resumeData) {
+                setSourceMode('saved');
+                setSelectedResumeId(savedSelection.selectedResumeId);
+                setJobRole(resumeData.jobRole || '');
+                setQuestions(resumeData.questions || emptyGrouped);
+                setFollowUps(resumeData.followUps || {});
+                setShowAnswerBoxes(resumeData.showAnswerBoxes || {});
+                setAnswerDrafts(resumeData.answerDrafts || {});
+                setAnswerEvaluations(resumeData.answerEvaluations || {});
+                setSelectionHydrated(true);
+                return;
+            }
+        }
+
+        // No data to restore
+        setSelectionHydrated(true);
+    }, []); // Empty dependency - run only on mount
+
     React.useEffect(() => {
         setSelectedResumeId(resumeId || '');
+        if (resumeId) {
+            setSelectionHydrated(true);
+        }
     }, [resumeId]);
 
     React.useEffect(() => {
         if (sourceMode !== 'saved') return;
+        if (!selectionHydrated) return;
 
         const activeSavedResumeId = getActiveResumeId();
         if (!activeSavedResumeId) {
@@ -453,23 +507,6 @@ const Interview = () => {
         setEvaluatingAnswers({});
         setAnswerEvaluations(stored.answerEvaluations || {});
     }, [sourceMode, resumeId, selectedResumeId]);
-
-    React.useEffect(() => {
-        if (resumeId) return;
-        const stored = safeParse(localStorage.getItem(uploadStorageKey));
-        if (!stored || stored.sourceMode !== 'upload') return;
-        setSourceMode('upload');
-        setJobRole(stored.jobRole || '');
-        setQuestions(stored.questions || emptyGrouped);
-        setFollowUps(stored.followUps || {});
-        setLoadingFollowUps({});
-        setResumeText(stored.resumeText || '');
-        setSessionId(stored.sessionId || '');
-        setShowAnswerBoxes(stored.showAnswerBoxes || {});
-        setAnswerDrafts(stored.answerDrafts || {});
-        setEvaluatingAnswers({});
-        setAnswerEvaluations(stored.answerEvaluations || {});
-    }, [resumeId]);
 
     React.useEffect(() => {
         if (sourceMode !== 'upload') return;
@@ -525,6 +562,15 @@ const Interview = () => {
         answerDrafts,
         answerEvaluations,
     ]);
+
+    React.useEffect(() => {
+        if (resumeId) return;
+        const payload = {
+            sourceMode,
+            selectedResumeId,
+        };
+        localStorage.setItem(savedSelectionStorageKey, JSON.stringify(payload));
+    }, [resumeId, sourceMode, selectedResumeId]);
 
     React.useEffect(() => {
         if (sourceMode !== 'upload') return;
