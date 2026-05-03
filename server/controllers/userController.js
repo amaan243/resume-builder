@@ -56,13 +56,10 @@ export const registerUser =async (req, res) => {
             });
         }
 
-        // Send verification email
-        try {
-            await sendVerificationEmail(email, verificationCode);
-        } catch (emailError) {
-            console.error("[REGISTER] Email sending failed:", emailError.message);
-            // Still continue - user can request resend
-        }
+        // Send verification email in background (do not block response)
+        sendVerificationEmail(email, verificationCode).catch((emailError) => {
+            console.error("[REGISTER] Email sending failed:", emailError?.message || emailError);
+        });
 
         // Return response WITHOUT token - user must verify first
         return res.status(201).json({
